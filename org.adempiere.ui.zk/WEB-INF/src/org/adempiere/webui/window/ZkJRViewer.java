@@ -374,8 +374,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 			Thread.currentThread().setContextClassLoader(cl);
 		}
 
-		iframe.setSrc(null);
-		Events.echoEvent("onRenderReport", this, null);		
+		iframe.setContent(media); 		
 	}
 	
 	private File getPDF() throws IOException, JRException {
@@ -393,10 +392,6 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 		exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, file.getAbsolutePath());
 		exporter.exportReport();
 		return file;
-	}
-
-	public void onRenderReport() {
-		iframe.setContent(media);
 	}
 
 	@Override
