@@ -325,6 +325,10 @@ public class FindWindow extends Window implements EventListener<Event>, ValueCha
         Button btnNew = ButtonFactory.createNamedButton(ConfirmPanel.A_NEW);
         btnNew.setId("btnNew");
         btnNew.addEventListener(Events.ON_CLICK,this);
+        
+        Button btnClear = ButtonFactory.createNamedButton(ConfirmPanel.A_RESET);
+        btnClear.setId("btnReset");
+        btnClear.addEventListener(Events.ON_CLICK,this);
 
         Button btnOk = ButtonFactory.createNamedButton(ConfirmPanel.A_OK);
         btnOk.setName("btnOkSimple");
@@ -336,6 +340,7 @@ public class FindWindow extends Window implements EventListener<Event>, ValueCha
         btnCancel.addEventListener(Events.ON_CLICK,this);
 
         Panel pnlButtonRight = new Panel();
+        pnlButtonRight.appendChild(btnClear);
         pnlButtonRight.appendChild(btnOk);
         pnlButtonRight.appendChild(btnCancel);
         pnlButtonRight.setStyle("text-align:right");
@@ -624,8 +629,7 @@ public class FindWindow extends Window implements EventListener<Event>, ValueCha
         {
             GridField mField = m_findFields[i];
             boolean isDisplayed = mField.isDisplayed();
-            
-			if (mField.getVO().displayType == DisplayType.YesNo) {
+            if (mField.getVO().displayType == DisplayType.YesNo || mField.isEncrypted()) {
 				// Make Yes-No searchable as list
 				GridFieldVO vo = mField.getVO();
 				GridFieldVO ynvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
@@ -1054,7 +1058,8 @@ public class FindWindow extends Window implements EventListener<Event>, ValueCha
         editor.dynamicDisplay();
         Label label = editor.getLabel();
         Component fieldEditor = editor.getComponent();
-
+        //Fix miss lable of checkbox
+        label.setValue(mField.getHeader());
         //
         if (displayLength > 0)      //  set it back
             mField.setDisplayLength(displayLength);
@@ -1250,6 +1255,21 @@ public class FindWindow extends Window implements EventListener<Event>, ValueCha
                     m_createNew  = true;
                     m_isCancel = false;
                     dispose();
+                }
+                else if ("btnReset".equals(btn.getName())){
+                	for (WEditor clearField : m_sEditors){
+                		clearField.setValue(null);                		
+                	}
+                	
+                	for (WEditor clearField : m_sEditorsTo){
+                		if (clearField != null){
+                			clearField.setValue(null);
+                    		clearField.setVisible(false);
+                    		
+                    		ToolBarButton moreButtor = m_sEditorsFlag.get(m_sEditorsTo.indexOf(clearField));
+                    		moreButtor.setChecked(false);
+                		}                		
+                	}                	
                 }
             }
         }
@@ -1680,14 +1700,23 @@ public class FindWindow extends Window implements EventListener<Event>, ValueCha
 
                     // globalqss - Carlos Ruiz - 20060711
                     // fix a bug with virtualColumn + isSelectionColumn not yielding results
-                    GridField field = getTargetMField(ColumnName);
-                    // add encryption here if the field is encrypted.
-                    if (field.isEncryptedColumn()) {
-                    	value = SecureEngine.encrypt(value, Env.getAD_Client_ID(Env.getCtx()));
-                    }
+                    GridField field = getTargetMField(ColumnName);                                                                                
                     
                     boolean isProductCategoryField = isProductCategoryField(field.getColumnName());
                     StringBuilder ColumnSQL = new StringBuilder(field.getColumnSQL(false));
+                    
+                    // add encryption here if the field is encrypted.
+                    if (field.isEncrypted()) {                    	
+                    	String Operator = MQuery.NULL;
+                    	if ("Y".equals(value)){
+                    		Operator = MQuery.NOT_NULL;
+                    	}   
+                    	m_query.addRestriction(ColumnSQL.toString(), Operator, null,
+                    			ColumnName, wed.getDisplay());
+                		appendCode(code, ColumnName, Operator, "", "", "AND", "", "");
+                		continue;
+                    }
+                    
                     //
                     // Be more permissive for String columns
                     if (isSearchLike(field))
