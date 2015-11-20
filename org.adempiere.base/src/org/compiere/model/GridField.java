@@ -1042,20 +1042,6 @@ public class GridField
 			else
 				return true;
 		}
-		
-		//	Search not cached
-		if (getDisplayType() == DisplayType.Search && m_lookup != null)
-		{
-			// need to re-set invalid values - OK BPartner in PO Line - not OK SalesRep in Invoice
-			if (m_lookup.getDirect(m_value, false, true) == null)
-			{
-				if (log.isLoggable(Level.FINEST)) log.finest(m_vo.ColumnName + " Search not valid - set to null");
-				setValue(null, m_inserting);
-				m_error = true;
-				return false;
-			}
-			return true;
-		} 
 
 		//  cannot be validated
 		if (!isLookup() || m_lookup == null)
@@ -1076,6 +1062,29 @@ public class GridField
 			&& Env.getAD_Client_ID(Env.getCtx()) == 0)
 			return true;
 
+		// normal when new a record must is a valid value
+		if (getGridTab().isNew() && m_lookup.containsKeyNoDirect(m_value))
+		{
+			return true;
+		}else if (getGridTab().isNew() && !m_lookup.containsKeyNoDirect(m_value)){
+			setValue(null, m_inserting);
+			return true;
+		}
+		
+		//	Search not cached
+		if (getDisplayType() == DisplayType.Search && m_lookup != null)
+		{	
+			// need to re-set invalid values - OK BPartner in PO Line - not OK SalesRep in Invoice
+			if (m_lookup.getDirect(m_value, false, true) == null)
+			{
+				if (log.isLoggable(Level.FINEST)) log.finest(m_vo.ColumnName + " Search not valid - set to null");
+				setValue(null, m_inserting);
+				m_error = true;
+				return false;
+			}
+			return true;
+		}
+		
 		if (log.isLoggable(Level.FINEST)) log.finest(m_vo.ColumnName + " - set to null");
 		setValue(null, m_inserting);
 		m_error = true;
