@@ -650,8 +650,8 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		//
 		Env.setContext(Env.getCtx(), m_WindowNoParent, Env.TAB_INFO, m_columnName, 
 			String.valueOf(m_M_AttributeSetInstance_ID));
-		Env.setContext(Env.getCtx(), m_WindowNoParent, Env.TAB_INFO, "M_Locator_ID", 
-			String.valueOf(m_M_Locator_ID));
+		/*Env.setContext(Env.getCtx(), m_WindowNoParent, Env.TAB_INFO, "M_Locator_ID", 
+			String.valueOf(m_M_Locator_ID));*/
 		//
 		this.detach();
 	}	//	dispose

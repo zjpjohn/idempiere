@@ -18,7 +18,6 @@ package org.adempiere.webui.window;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
@@ -92,7 +91,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		log.info("M_Warehouse_ID=" + M_Warehouse_ID 
 			+ ", M_Locator_ID=" + M_Locator_ID
 			+ ", M_Product_ID=" + M_Product_ID);
-		m_M_Warehouse_ID = M_Warehouse_ID;
+		//m_M_Warehouse_ID = M_Warehouse_ID;
 		m_M_Locator_ID = M_Locator_ID;
 		m_M_Product_ID = M_Product_ID;
 		try
@@ -113,13 +112,14 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	//
 	private WListbox 			m_table = new WListbox();
 	//	Parameter
-	private int			 		m_M_Warehouse_ID;
+	//private int			 		m_M_Warehouse_ID;
 	private int			 		m_M_Locator_ID;
 	private int			 		m_M_Product_ID;
 	//
 	private int					m_M_AttributeSetInstance_ID = -1;
 	private String				m_M_AttributeSetInstanceName = null;
 	private String				m_sql;
+	protected String 			m_sqlAll;
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(WPAttributeInstance.class);
 
@@ -129,7 +129,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	 */
 	private void init() throws Exception
 	{
-		showAll.setLabel(Msg.getMsg(Env.getCtx(), "ShowAll"));
+		//showAll.setLabel(Msg.getMsg(Env.getCtx(), "ShowAll"));
 		
 		this.appendChild(mainLayout);
 		
@@ -137,8 +137,8 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		Hbox box = new Hbox();
 		box.setParent(northPanel);
 		box.setPack("end");
-		box.appendChild(showAll);
-		showAll.addEventListener(Events.ON_CHECK, this);
+		//box.appendChild(showAll);
+		//showAll.addEventListener(Events.ON_CHECK, this);
 		
 		North north = new North();
 		north.setParent(mainLayout);
@@ -161,9 +161,9 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	/**	Table Column Layout Info			*/
 	private static ColumnInfo[] s_layout = new ColumnInfo[] 
 	{
-		new ColumnInfo(" ", "s.M_AttributeSetInstance_ID", IDColumn.class),
+		new ColumnInfo(" ", "asi.M_AttributeSetInstance_ID", IDColumn.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "Description"), "asi.Description", String.class),
-		new ColumnInfo(Msg.translate(Env.getCtx(), "Lot"), "asi.Lot", String.class),
+		/*new ColumnInfo(Msg.translate(Env.getCtx(), "Lot"), "asi.Lot", String.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "SerNo"), "asi.SerNo", String.class), 
 		new ColumnInfo(Msg.translate(Env.getCtx(), "GuaranteeDate"), "asi.GuaranteeDate", Timestamp.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "M_Locator_ID"), "l.Value", KeyNamePair.class, "s.M_Locator_ID"),
@@ -173,20 +173,30 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		//	See RV_Storage
 		new ColumnInfo(Msg.translate(Env.getCtx(), "GoodForDays"), "(daysbetween(asi.GuaranteeDate, SYSDATE))-p.GuaranteeDaysMin", Integer.class, true, true, null),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "ShelfLifeDays"), "daysbetween(asi.GuaranteeDate, SYSDATE)", Integer.class),
-		new ColumnInfo(Msg.translate(Env.getCtx(), "ShelfLifeRemainingPct"), "CASE WHEN p.GuaranteeDays > 0 THEN TRUNC(((daysbetween(asi.GuaranteeDate, SYSDATE))/p.GuaranteeDays)*100) ELSE 0 END", Integer.class),
+		new ColumnInfo(Msg.translate(Env.getCtx(), "ShelfLifeRemainingPct"), "CASE WHEN p.GuaranteeDays > 0 THEN TRUNC(((daysbetween(asi.GuaranteeDate, SYSDATE))/p.GuaranteeDays)*100) ELSE 0 END", Integer.class),*/
 	};
-	/**	From Clause							*/
+	/**	From Clause							
 	private static String s_sqlFrom = "M_Storage s"
 		+ " INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID)"
 		+ " INNER JOIN M_Product p ON (s.M_Product_ID=p.M_Product_ID)"
 		+ " LEFT OUTER JOIN M_AttributeSetInstance asi ON (s.M_AttributeSetInstance_ID=asi.M_AttributeSetInstance_ID)";
-	/** Where Clause						*/
+	
+	private static String s_sqlAllFrom= "M_Transaction t "
+			+ " INNER JOIN M_Locator l ON (t.M_Locator_ID=l.M_Locator_ID)"
+			+ " INNER JOIN M_Product p ON (t.M_Product_ID=p.M_Product_ID)"
+			+ " LEFT OUTER JOIN M_AttributeSetInstance asi ON (t.M_AttributeSetInstance_ID=asi.M_AttributeSetInstance_ID)"
+			+ " LEFT OUTER JOIN M_Storage s ON (s.M_AttributeSetInstance_ID=t.M_AttributeSetInstance_ID and s.M_Product_ID=p.M_Product_ID and s.M_Locator_ID=l.M_Locator_ID ) ";
+	
+	
+	/** Where Clause						
 	private static String s_sqlWhere = "s.M_Product_ID=? AND l.M_Warehouse_ID=?"; 
-	private static String s_sqlWhereWithoutWarehouse = " s.M_Product_ID=?"; 
+	private static String s_sqlWhereWithoutWarehouse = " s.M_Product_ID=?";*/ 
 
+	private static String s_sqlHsv= "m_asi_v asi ";
+	/*
 	private String	m_sqlNonZero = " AND (s.QtyOnHand<>0 OR s.QtyReserved<>0 OR s.QtyOrdered<>0)";
 	private String	m_sqlMinLife = "";
-
+*/
 	/**
 	 * 	Dynamic Init
 	 * 	@param C_BPartner_ID BP
@@ -194,6 +204,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	private void dynInit(int C_BPartner_ID)
 	{
 		if (log.isLoggable(Level.CONFIG)) log.config("C_BPartner_ID=" + C_BPartner_ID);
+		/*
 		if (C_BPartner_ID != 0)
 		{
 			int ShelfLifeMinPct = 0;
@@ -239,10 +250,24 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 				if (log.isLoggable(Level.CONFIG)) log.config( "PAttributeInstance.dynInit - ShelfLifeMinDays=" + ShelfLifeMinDays);
 			}
 		}	//	BPartner != 0
-
+		
 		m_sql = m_table.prepareTable (s_layout, s_sqlFrom, 
 					m_M_Warehouse_ID == 0 ? s_sqlWhereWithoutWarehouse : s_sqlWhere, false, "s")
 				+ " ORDER BY asi.GuaranteeDate, s.QtyOnHand";	//	oldest, smallest first
+		
+		m_sqlAll =m_table.prepareTable (s_layout, s_sqlAllFrom, 
+				m_M_Warehouse_ID == 0 ? "" : "t.M_Product_ID=? AND l.M_Warehouse_ID=?", false, "t")
+			+ " Group by asi.Description,asi.Lot,asi.SerNo,asi.GuaranteeDate,t.M_AttributeSetInstance_ID,l.Value,t.M_Locator_ID,p.GuaranteeDays,p.guaranteedaysmin " +
+			" ORDER BY asi.GuaranteeDate, sum(s.QtyOnHand)";	//	oldest, smallest first
+		
+		m_sqlAll=m_sqlAll.replaceFirst("s.QtyOnHand", "avg(s.QtyOnHand)");
+		m_sqlAll=m_sqlAll.replaceFirst("s.QtyReserved", "avg(s.QtyReserved)");
+		m_sqlAll=m_sqlAll.replaceFirst("s.QtyOrdered", "avg(s.QtyOrdered)");
+		m_sqlAll=m_sqlAll.replaceFirst("s.M_AttributeSetInstance_ID", "t.M_AttributeSetInstance_ID");
+		m_sqlAll=m_sqlAll.replaceFirst("s.M_Locator_ID", "t.M_Locator_ID");*/
+		
+		m_sql =m_table.prepareTable (s_layout, s_sqlHsv, " asi.m_product_id = ? ", false, null, false);
+	
 		//
 		m_table.addEventListener(Events.ON_SELECT, this);
 		//
@@ -255,7 +280,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	private void refresh()
 	{
 		String sql = m_sql;
-		int pos = m_sql.lastIndexOf(" ORDER BY ");
+		/*int pos = m_sql.lastIndexOf(" ORDER BY ");
 		if (!showAll.isChecked())
 		{
 			sql = m_sql.substring(0, pos) 
@@ -263,7 +288,10 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			if (m_sqlMinLife.length() > 0)
 				sql += m_sqlMinLife;
 			sql += m_sql.substring(pos);
-		}
+		}else{
+			sql= m_sqlAll;
+		}*/
+		
 		//
 		log.finest(sql);
 		PreparedStatement pstmt = null;
@@ -272,8 +300,8 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		{
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, m_M_Product_ID);
-			if (m_M_Warehouse_ID != 0)
-				pstmt.setInt(2, m_M_Warehouse_ID);
+			/*if (m_M_Warehouse_ID != 0)
+				pstmt.setInt(2, m_M_Warehouse_ID);*/
 			rs = pstmt.executeQuery();
 			m_table.loadTable(rs);
 		}
@@ -325,13 +353,13 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			{
 				m_M_AttributeSetInstance_ID = ID.intValue();
 				m_M_AttributeSetInstanceName = (String)m_table.getValueAt(row, 1);
-				//
+				/*
 				Object oo = m_table.getValueAt(row, 5);
 				if (oo instanceof KeyNamePair)
 				{
 					KeyNamePair pp = (KeyNamePair)oo;
 					m_M_Locator_ID = pp.getKey();
-				}
+				}*/
 			}
 		}
 		confirmPanel.getButton("Ok").setEnabled(enabled);

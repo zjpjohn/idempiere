@@ -539,6 +539,10 @@ public class WListbox extends Listbox implements IMiniTable, TableValueChangeLis
 		m_colorColumnIndex = modelIndex;
 	}   //  setColorColumn
 
+	public void loadTable(ResultSet rs){
+		loadTable (rs, false, 0);
+	}
+	
 	/**
 	 *	Load Table from ResultSet - The ResultSet is not closed.
 	 *
@@ -546,9 +550,9 @@ public class WListbox extends Listbox implements IMiniTable, TableValueChangeLis
 	 *  			The contents must conform to the column layout defined in
 	 *  			{@link #prepareTable(ColumnInfo[], String, String, boolean, String)}
 	 */
-	public void loadTable(ResultSet rs)
+	public void loadTable(ResultSet rs, boolean isAppend, int currentIndex)
 	{
-		int row = 0; // model row
+		int row = currentIndex; // model row
 		int col = 0; // model column
 		Object data = null;
 		int rsColIndex = 0; // index into result set
@@ -560,7 +564,9 @@ public class WListbox extends Listbox implements IMiniTable, TableValueChangeLis
 			throw new UnsupportedOperationException("Layout not defined");
 		}
 
-		clearTable();
+		if (!isAppend){
+			clearTable();
+		}
 
 		try
 		{
