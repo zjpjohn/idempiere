@@ -93,13 +93,16 @@ public class MTable extends X_AD_Table
 		return retValue;
 	}	//	get
 
+	public static MTable get (Properties ctx, String tableName){
+		return get (ctx, tableName, null);
+	}
 	/**
 	 * 	Get Table from Cache
 	 *	@param ctx context
 	 *	@param tableName case insensitive table name
 	 *	@return Table
 	 */
-	public static MTable get (Properties ctx, String tableName)
+	public static MTable get (Properties ctx, String tableName, String trxName)
 	{
 		if (tableName == null)
 			return null;
@@ -111,6 +114,8 @@ public class MTable extends X_AD_Table
 					&& retValue.getCtx() == ctx
 				)
 			{
+				if (trxName != null)
+					retValue.set_TrxName (trxName);
 				return retValue;
 		}
 		}
@@ -121,11 +126,11 @@ public class MTable extends X_AD_Table
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql, null);
+			pstmt = DB.prepareStatement (sql, trxName);
 			pstmt.setString(1, tableName.toUpperCase());
 			rs = pstmt.executeQuery ();
 			if (rs.next())
-				retValue = new MTable (ctx, rs, null);
+				retValue = new MTable (ctx, rs, trxName);
 		}
 		catch (Exception e)
 		{
