@@ -318,8 +318,7 @@ public final class DisplayType
 	 */
 	public static boolean isLOB (int displayType)
 	{
-		if (displayType == Binary
-			|| displayType == TextLong)
+		if (displayType == Binary)
 			return true;
 		
 		List<IDisplayTypeFactory> factoryList = Service.locator().list(IDisplayTypeFactory.class).getServices();
