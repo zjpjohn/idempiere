@@ -826,7 +826,7 @@ public class CalloutOrder extends CalloutEngine
 		//		ADialog.warn(,WindowNo, "WarehouseChanged");
 		//	}
 
-
+/*
 		if (Env.isSOTrx(ctx, WindowNo))
 		{
 			MProduct product = MProduct.get (ctx, M_Product_ID.intValue());
@@ -863,7 +863,7 @@ public class CalloutOrder extends CalloutEngine
 					}
 				}
 			}
-		}
+		}*/
 		//
 		if (steps) log.warning("fini");
 		return tax (ctx, WindowNo, mTab, mField, value);
@@ -1310,7 +1310,7 @@ public class CalloutOrder extends CalloutEngine
 		//	QtyEntered = (BigDecimal)mTab.getValue("QtyEntered");
 			QtyOrdered = (BigDecimal)mTab.getValue("QtyOrdered");
 		}
-
+/*
 		//	Storage
 		if (M_Product_ID != 0
 			&& Env.isSOTrx(ctx, WindowNo)
@@ -1350,7 +1350,7 @@ public class CalloutOrder extends CalloutEngine
 					}
 				}
 			}
-		}
+		}*/
 		//
 		return "";
 	}	//	qty

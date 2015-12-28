@@ -904,7 +904,7 @@ public class MOrderLine extends X_C_OrderLine
 			setQtyEntered(getQtyEntered());
 		if (newRecord || is_ValueChanged("QtyOrdered"))
 			setQtyOrdered(getQtyOrdered());
-		
+		/*
 		//	Qty on instance ASI for SO
 		if (m_IsSOTrx 
 			&& getM_AttributeSetInstance_ID() != 0
@@ -944,7 +944,7 @@ public class MOrderLine extends X_C_OrderLine
 				}
 			}	//	stocked
 		}	//	SO instance
-		
+		*/
 		//	FreightAmt Not used
 		if (Env.ZERO.compareTo(getFreightAmt()) != 0)
 			setFreightAmt(Env.ZERO);
