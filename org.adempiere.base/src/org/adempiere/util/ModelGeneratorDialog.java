@@ -131,6 +131,10 @@ public class ModelGeneratorDialog extends JDialog implements ActionListener {
 				return;
 			}
 			this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			
+			if (tableName != null)
+				tableName = tableName.toUpperCase().trim();
+			
 			if (fGenerateInterface.isSelected()) {
 				ModelInterfaceGenerator.generateSource(folder, packageName, entityType, tableName);
 			}

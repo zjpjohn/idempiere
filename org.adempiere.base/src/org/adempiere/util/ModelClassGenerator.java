@@ -900,10 +900,10 @@ public class ModelClassGenerator
 			.append("FROM AD_Table ")
 			.append("WHERE (TableName IN ('RV_WarehousePrice','RV_BPartner')")	//	special views
 			.append(" OR IsView='N')")
-			.append(" AND IsActive = 'Y' AND TableName NOT LIKE '%_Trl' ");
+			.append(" AND IsActive = 'Y' AND UPPER(TableName) NOT LIKE '%_TRL' ");
 		// Autodetect if we need to use IN or LIKE clause - teo_sarca [ 3020640 ]
 		if (tableLike.indexOf(",") == -1)
-			sql.append(" AND TableName LIKE ").append(tableLike);
+			sql.append(" AND UPPER(TableName) LIKE ").append(tableLike);
 		else
 			sql.append(" AND TableName IN (").append(tableLike).append(")"); // only specific tables
 		sql.append(" AND ").append(entityTypeFilter.toString());
