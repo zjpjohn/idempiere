@@ -1063,11 +1063,17 @@ public class GridField
 			return true;
 
 		// normal when new a record must is a valid value
-		if (getGridTab().isNew() && m_lookup.containsKeyNoDirect(m_value))
+		if (getGridTab().isNew())
 		{
-			return true;
-		}else if (getGridTab().isNew() && !m_lookup.containsKeyNoDirect(m_value)){
-			setValue(null, m_inserting);
+			boolean isContainKey = false;
+			if (getDisplayType() == DisplayType.Search && m_lookup instanceof MLookup)
+				isContainKey = ((MLookup)m_lookup).isContainForSeachEditor(m_value);
+			else
+				isContainKey = m_lookup.containsKeyNoDirect(m_value);
+			
+			if (!isContainKey)
+				setValue(null, m_inserting);
+			
 			return true;
 		}
 		
