@@ -37,6 +37,8 @@ import org.compiere.util.KeyNamePair;
 import org.compiere.util.NamePair;
 import org.compiere.util.ValueNamePair;
 
+import vn.hsv.idempiere.base.util.DBUtils;
+
 /**
  *	An intelligent MutableComboBoxModel, which determines what can be cached.
  *  <pre>
@@ -284,6 +286,13 @@ public final class MLookup extends Lookup implements Serializable
 		}
 	}   //  containsKeyNoDirect
 
+	public boolean isContainForSeachEditor (Object key){
+		if (m_loader == null)
+			m_loader = new MLoader();
+		
+		return m_loader.getByKey(key) != null;
+	}
+	
 	/**
 	 * @return  a string representation of the object.
 	 */
@@ -759,63 +768,16 @@ public final class MLookup extends Lookup implements Serializable
 		protected void doRun()
 		{
 			long startTime = System.currentTimeMillis();
-			if (Ini.isClient())
-				MLookupCache.loadStart (m_info);
-			StringBuilder sql = new StringBuilder().append(m_info.Query);
-
-			// IDEMPIERE 90
-			if (isShortList())
-			{
-				// Adding ", IsShortList" to the sql SELECT clause
-				int posFirstPoint = sql.indexOf(".");
-				String tableName = sql.substring(7, posFirstPoint);
-				int posFirstFrom = sql.indexOf(tableName+".IsActive FROM "+tableName) + tableName.length() + 9 ; // 9 = .IsActive
-				String ClauseFromWhereOrder = sql.substring(posFirstFrom, sql.length());
-				sql = new StringBuilder(sql.substring(0, posFirstFrom)  + ", " + tableName + ".IsShortList" + ClauseFromWhereOrder);				
-			} // IDEMPIERE 90
-
-			//	not validated
-			if (!m_info.IsValidated)
-			{
-				String validation = Env.parseContext(m_info.ctx, m_info.WindowNo, m_info.tabNo, m_info.ValidationCode, false);
-				m_info.parsedValidationCode = validation;
-				if (validation.length() == 0 && m_info.ValidationCode.length() > 0)
-				{
-					if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": Loader NOT Validated: " + m_info.ValidationCode);
-					// Bug 1843862 - Lookups not working on Report Viewer window
-					// globalqss - when called from Viewer window ignore error about not parseable context variables
-					// there is no context in report viewer windows
-					boolean isReportViewer = Env.getContext(m_info.ctx, m_info.WindowNo, "_WinInfo_IsReportViewer").equals("Y");
-					if (!isReportViewer) {
-						m_lookup.clear();
-						return;
-					}
-				}
-				else
-				{					
-					if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": Loader Validated: " + validation);
-					int posFrom = sql.lastIndexOf(" FROM ");
-					boolean hasWhere = sql.indexOf(" WHERE ", posFrom) != -1;
-					//
-					int posOrder = sql.lastIndexOf(" ORDER BY ");
-					if (posOrder != -1)
-						sql = new StringBuilder(sql.substring(0, posOrder)) 
-							.append((hasWhere ? " AND " : " WHERE ")) 
-							.append(validation)
-							.append(sql.substring(posOrder));
-					else
-						sql.append((hasWhere ? " AND " : " WHERE ")) 
-							.append(validation);
-					if (CLogMgt.isLevelFinest())
-						if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": Validation=" + validation);
-				}
-			}
+			StringBuilder sql = getSql ();
 			//	check
 			if (Thread.interrupted())
 			{
 				log.log(Level.WARNING, m_info.KeyColumn + ": Loader interrupted");
 				return;
 			}
+			
+			if (sql == null)
+				return;
 			//
 			if (log.isLoggable(Level.FINER)) log.finer(m_info.Column_ID + ", " + m_info.KeyColumn + ": " + sql.toString());
 			if (log.isLoggable(Level.FINEST)) log.finest(m_info.KeyColumn + ": " + sql);
@@ -908,6 +870,114 @@ public final class MLookup extends Lookup implements Serializable
 			if (Ini.isClient()) 
 				MLookupCache.loadEnd (m_info, m_lookup);
 		}	//	run
+		
+		public StringBuilder getSql (){
+			if (Ini.isClient())
+				MLookupCache.loadStart (m_info);
+			StringBuilder sql = new StringBuilder().append(m_info.Query);
+
+			// IDEMPIERE 90
+			if (isShortList())
+			{
+				// Adding ", IsShortList" to the sql SELECT clause
+				int posFirstPoint = sql.indexOf(".");
+				String tableName = sql.substring(7, posFirstPoint);
+				int posFirstFrom = sql.indexOf(tableName+".IsActive FROM "+tableName) + tableName.length() + 9 ; // 9 = .IsActive
+				String ClauseFromWhereOrder = sql.substring(posFirstFrom, sql.length());
+				sql = new StringBuilder(sql.substring(0, posFirstFrom)  + ", " + tableName + ".IsShortList" + ClauseFromWhereOrder);				
+			} // IDEMPIERE 90
+
+			//	not validated
+			if (!m_info.IsValidated)
+			{
+				String validation = Env.parseContext(m_info.ctx, m_info.WindowNo, m_info.tabNo, m_info.ValidationCode, false);
+				m_info.parsedValidationCode = validation;
+				if (validation.length() == 0 && m_info.ValidationCode.length() > 0)
+				{
+					if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": Loader NOT Validated: " + m_info.ValidationCode);
+					// Bug 1843862 - Lookups not working on Report Viewer window
+					// globalqss - when called from Viewer window ignore error about not parseable context variables
+					// there is no context in report viewer windows
+					boolean isReportViewer = Env.getContext(m_info.ctx, m_info.WindowNo, "_WinInfo_IsReportViewer").equals("Y");
+					if (!isReportViewer) {
+						m_lookup.clear();
+						return null;
+					}
+				}
+				else
+				{					
+					if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": Loader Validated: " + validation);
+					DBUtils.appendWhereClause(sql, validation);
+					if (CLogMgt.isLevelFinest())
+						if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": Validation=" + validation);
+				}
+			}
+			
+			return sql;
+		}
+		
+		public NamePair getByKey (Object key){
+			
+			StringBuilder sql = getSql();
+			boolean isNumber = m_info.KeyColumn.endsWith("_ID");
+			
+			StringBuilder keyClause = new StringBuilder();
+			if (isNumber){
+				keyClause.append(m_info.KeyColumn);
+				keyClause.append(" = ");
+				keyClause.append((int)key);
+			}else{
+				keyClause.append("value");
+				keyClause.append(" = '");
+				keyClause.append(key);
+				keyClause.append("'");
+			}
+			
+			keyClause.append(" AND isActive = 'Y'");
+			
+			DBUtils.appendWhereClause(sql, keyClause.toString());
+			
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			
+			try
+			{
+				//	SELECT Key, Value, Name, IsActive FROM ...
+				pstmt = DB.prepareStatement(sql.toString(), null);
+				rs = pstmt.executeQuery();
+
+				//	Get first ... rows
+				m_allLoaded = true;
+				if (rs.next())
+				{
+					//  load data
+					StringBuilder name = new StringBuilder().append(rs.getString(3));
+					
+					if (isNumber)
+					{
+						int keyValue = (int)rs.getInt(1);
+						KeyNamePair p = new KeyNamePair(keyValue, name.toString());
+						return p;
+					}
+					else
+					{
+						String value = rs.getString(2);
+						ValueNamePair p = new ValueNamePair(value, name.toString());
+						return p;
+					}
+				}
+			}
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, m_info.KeyColumn + ", " + m_info.Column_ID + " : Loader - " + sql, e);
+				m_allLoaded = false;
+			}
+			finally {
+				DB.close(rs, pstmt);
+			}
+			
+			return null;
+		}
 	}	//	Loader
 
 }	//	MLookup
