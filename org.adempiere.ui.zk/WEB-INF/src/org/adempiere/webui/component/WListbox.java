@@ -394,8 +394,11 @@ public class WListbox extends Listbox implements IMiniTable, TableValueChangeLis
         }
 
         sql.append( " FROM ").append(from);
-        sql.append(" WHERE ").append(where);
-
+        if (where != null && where.trim().length() > 0)
+        	sql.append(" WHERE ").append(where);
+        else
+        	sql.append(" WHERE ");
+        
         if (from.length() == 0)
         {
             return sql.toString();
