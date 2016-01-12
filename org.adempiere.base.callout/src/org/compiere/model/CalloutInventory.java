@@ -58,77 +58,24 @@ public class CalloutInventory extends CalloutEngine
 			docSubTypeInv = dt.getDocSubTypeInv();
 		}
 
-		Integer InventoryLine = (Integer)mTab.getValue("M_InventoryLine_ID");
 		BigDecimal bd = null;
-		
-		if (InventoryLine != null && InventoryLine.intValue() != 0) {
-			MInventoryLine _ILine = new MInventoryLine(ctx, InventoryLine, null);
-			Integer M_Product_ID = (Integer)mTab.getValue("M_Product_ID");
-			Integer M_Locator_ID = (Integer)mTab.getValue("M_Locator_ID");		
-			Integer M_AttributeSetInstance_ID = 0;
-			// if product or locator has changed recalculate Book Qty
-			if ((M_Product_ID != null && M_Product_ID != _ILine.getM_Product_ID()) || 
-					(M_Locator_ID !=null && M_Locator_ID != _ILine.getM_Locator_ID())) {
+				
+		Integer M_Product_ID = (Integer)mTab.getValue("M_Product_ID");
+		Integer M_Locator_ID = (Integer)mTab.getValue("M_Locator_ID");		
+		Integer M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
 
-				// Check ASI - if product has been changed remove old ASI
-				if (M_Product_ID == _ILine.getM_Product_ID()) {
-					M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
-					if( M_AttributeSetInstance_ID == null )
-						M_AttributeSetInstance_ID = 0;
-				} else {
-					mTab.setValue("M_AttributeSetInstance_ID", null);
-				}
-				if (MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(docSubTypeInv)) {
-					try {
-						bd = setQtyBook(M_AttributeSetInstance_ID, M_Product_ID, M_Locator_ID);
-						mTab.setValue("QtyBook", bd);
-					} catch (Exception e) {
-						return e.getLocalizedMessage();
-					}
-				}
-			}
-			return "";
+		// Check ASI - if product has been changed remove old ASI
+		if (MInventoryLine.COLUMNNAME_M_Product_ID.equalsIgnoreCase(mField.getColumnName())) {
+			mTab.setValue("M_AttributeSetInstance_ID", null);
+			M_AttributeSetInstance_ID = 0;
 		}
-			
-		//	New Line - Get Book Value
-		int M_Product_ID = 0;
-		Integer Product = (Integer)mTab.getValue("M_Product_ID");
-		if (Product != null)
-			M_Product_ID = Product.intValue();
-		if (M_Product_ID == 0)
-			return "";
-		int M_Locator_ID = 0;
-		Integer Locator = (Integer)mTab.getValue("M_Locator_ID");
-		if (Locator != null)
-			M_Locator_ID = Locator.intValue();
-		if (M_Locator_ID == 0)
-			return "";
-		
-		//	Set Attribute
-		int M_AttributeSetInstance_ID = 0; 
-		Integer ASI = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
-		if (ASI != null)
-			M_AttributeSetInstance_ID = ASI.intValue();
-		//	Product Selection
-		if (MInventoryLine.COLUMNNAME_M_Product_ID.equals(mField.getColumnName()))
-		{
-			if (Env.getContextAsInt(ctx, WindowNo, Env.TAB_INFO, "M_Product_ID") == M_Product_ID)
-			{
-				M_AttributeSetInstance_ID = Env.getContextAsInt(ctx, WindowNo, Env.TAB_INFO, "M_AttributeSetInstance_ID");
-			}
-			else
-			{
-				M_AttributeSetInstance_ID = 0;
-			}
-			if (M_AttributeSetInstance_ID != 0)
-				mTab.setValue(MInventoryLine.COLUMNNAME_M_AttributeSetInstance_ID, M_AttributeSetInstance_ID);
-			else
-				mTab.setValue(MInventoryLine.COLUMNNAME_M_AttributeSetInstance_ID, null);
-		}
-			
-		// Set QtyBook from first storage location
-		// kviiksaar: Call's now the extracted function
+
 		if (MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(docSubTypeInv)) {
+			if (M_Product_ID == null || M_Locator_ID == null){
+				mTab.setValue("QtyBook", BigDecimal.ZERO);
+				return "";
+			}
+			
 			try {
 				bd = setQtyBook(M_AttributeSetInstance_ID, M_Product_ID, M_Locator_ID);
 				mTab.setValue("QtyBook", bd);
