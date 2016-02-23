@@ -92,12 +92,16 @@ ContextMenuListener, IZoomableEditor
 
 	private boolean onselecting = false;
 
-    public WTableDirEditor(GridField gridField)
-    {
-        super(new EditorCombobox(), gridField);
+	public WTableDirEditor(EditorCombobox componentEditor, GridField gridField){
+		super(componentEditor == null?new EditorCombobox():componentEditor, gridField);
         ((EditorCombobox)getComponent()).editor = this;
         lookup = gridField.getLookup();
-        init();
+        init();		
+	}
+	
+    public WTableDirEditor(GridField gridField)
+    {
+        this (new EditorCombobox(), gridField);        
     }
 	
 	/** 
@@ -662,7 +666,7 @@ ContextMenuListener, IZoomableEditor
 			this.actionRefresh();
     }
 	
-	private static class EditorCombobox extends Combobox {
+	public static class EditorCombobox extends Combobox {
 		
 		/**
 		 * generated serial id
