@@ -994,7 +994,7 @@ public class MLookupFactory
 			+ ", c.ColumnSQL " // 5
 			+ "FROM AD_Table t INNER JOIN AD_Column c ON (t.AD_Table_ID=c.AD_Table_ID) "
 			+ "WHERE TableName=?"
-			+ " AND c.IsIdentifier='Y' "
+			+ " AND c.IsIdentifier='Y' AND c.isActive = 'Y'"
 			+ "ORDER BY c.SeqNo";
 		//
 		ArrayList<LookupDisplayColumn> list = new ArrayList<LookupDisplayColumn>();
