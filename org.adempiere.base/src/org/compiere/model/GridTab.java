@@ -2870,6 +2870,14 @@ public class GridTab implements DataStatusListener, Evaluatee, Serializable
 		Object value = field.getValue();
 		Object oldValue = field.getOldValue();
 
+		List<IColumnCallout> callouts = Core.findCallout(getTableName(), field.getColumnName(), Boolean.TRUE);
+		
+		String error = processExtendCallout (callouts, field, value, oldValue);
+		
+		if (error != null &&  !"".equals(error.trim())){
+			return error;
+		}
+		
 		String callout = field.getCallout();
 
 		if (log.isLoggable(Level.FINE)) log.fine(field.getColumnName() + "=" + value
@@ -2994,7 +3002,13 @@ public class GridTab implements DataStatusListener, Evaluatee, Serializable
 			}   //  for each callout
 		}
 
-		List<IColumnCallout> callouts = Core.findCallout(getTableName(), field.getColumnName());
+		callouts = Core.findCallout(getTableName(), field.getColumnName(), Boolean.FALSE);
+		
+		return processExtendCallout (callouts, field, value, oldValue);
+
+	}	//	processCallout
+
+	protected String processExtendCallout(List<IColumnCallout> callouts, GridField field, Object value, Object oldValue) {
 		if (callouts != null && !callouts.isEmpty()) {
 			for(IColumnCallout co : callouts)
 			{
@@ -3025,10 +3039,10 @@ public class GridTab implements DataStatusListener, Evaluatee, Serializable
 				}
 			}
 		}
-
+		
 		return "";
-	}	//	processCallout
-
+	}
+	
 	/**
 	 *  Get Value of Field with columnName
 	 *  @param columnName column name
