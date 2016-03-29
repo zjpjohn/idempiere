@@ -861,13 +861,13 @@ public abstract class AbstractADWindowContent extends AbstractUIPart implements 
     /**
      * @see ToolbarListener#onPrevious()
      */
-    public void onTreeNavigate(final int rowIndex)
+    public void onTreeNavigate(final int rowIndex, final GridTab gridTab)
     {
     	Callback<Boolean> callback = new Callback<Boolean>() {
     		@Override
     		public void onCallback(Boolean result) {
     			if (result) {
-    				adTabbox.getSelectedGridTab().navigate(rowIndex);
+    				gridTab.navigate(rowIndex);
     				//focusToActivePanel();
     			}
     		}
