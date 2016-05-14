@@ -586,7 +586,8 @@ public class ConfigurationData
 		boolean isGmail = mailServer.getHostName().equalsIgnoreCase("smtp.gmail.com");
 		boolean smtpOK = false;
 		boolean imapOK = false;
-		if (testPort (mailServer, isGmail ? 587 : 25, true))
+		int smtpPort = isGmail ? 587 : 25;
+		if (testPort (mailServer, smtpPort, true))
 		{
 			log.config("OK: SMTP Server contacted");
 			smtpOK = true;
@@ -620,10 +621,10 @@ public class ConfigurationData
 		{
 			String admail = adminEMail.toString();
 			EMail email = new EMail (new Properties(),
-					mailServer.getHostName (),
+					mailServer.getHostName (), smtpPort, isGmail,
 					admail, admail,
 					"Adempiere Server Setup Test",
-					"Test: " + getProperties());
+					"Test: " + getProperties(), false, true);
 			email.createAuthenticator (mailUser, mailPassword);
 			if (EMail.SENT_OK.equals (email.send ()))
 			{

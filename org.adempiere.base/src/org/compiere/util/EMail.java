@@ -137,7 +137,7 @@ public final class EMail implements Serializable
 	}
 
 	/**
-	 *	Full Constructor
+	 *	Full Constructor for normal case, auto pass false for isTestEmail to fix IDEMPIERE-3100
 	 *	@param ctx context
 	 *  @param smtpHost The mail server
 	 *  @param smtpPort
@@ -148,14 +148,33 @@ public final class EMail implements Serializable
 	 *  @param message  The message
 	 *  @param html html email
 	 */
+	public EMail (Properties ctx, String smtpHost, int smtpPort, boolean isSecureSmtp, String from, String to,
+			String subject, String message, boolean html){
+		this (ctx, smtpHost, smtpPort, isSecureSmtp, from, to, subject, message, html, false);
+	}
+	
+	/**
+	 *	Full Constructor
+	 *	@param ctx context
+	 *  @param smtpHost The mail server
+	 *  @param smtpPort
+	 *  @param isSecureSmtp
+	 *  @param from Sender's EMail address
+	 *  @param to   Recipient EMail address
+	 *  @param subject  Subject of message
+	 *  @param message  The message
+	 *  @param html html email
+	 *  @param isTestEmail default is false, when call from install dialog, pass true. it's for resolved issue 
+	 */
 
 	public EMail (Properties ctx, String smtpHost, int smtpPort, boolean isSecureSmtp, String from, String to,
-		String subject, String message, boolean html)
+		String subject, String message, boolean html, boolean isTestEmail)
 	{
-		
+		this.isTestEmail = isTestEmail;
 		setSmtpHost(smtpHost);
 		setFrom(from);
-		String bccAddressForAllMails = MSysConfig.getValue(MSysConfig.MAIL_SEND_BCC_TO_ADDRESS, Env.getAD_Client_ID(Env.getCtx()));
+		String bccAddressForAllMails = this.isTestEmail?null:
+			MSysConfig.getValue(MSysConfig.MAIL_SEND_BCC_TO_ADDRESS, Env.getAD_Client_ID(Env.getCtx()));
 		if (! Util.isEmpty(bccAddressForAllMails, true))
 			addBcc(bccAddressForAllMails);
 		addTo(to);
@@ -223,6 +242,8 @@ public final class EMail implements Serializable
 	private boolean 	m_valid = false;
 	/** Send result Message			*/
 	private String		m_sentMsg = null;
+	
+	private boolean isTestEmail = false;
 
 	private List<ValueNamePair> additionalHeaders = new ArrayList<ValueNamePair>();
 	/**	Mail Sent OK Status				*/
@@ -299,7 +320,8 @@ public final class EMail implements Serializable
 			m_msg.setFrom(m_from);
 
 			// IDEMPIERE-2104 - intended for test or dev systems to not send undesired emails
-			boolean isDontSendToAddress = MSysConfig.getBooleanValue(MSysConfig.MAIL_DONT_SEND_TO_ADDRESS, false, Env.getAD_Client_ID(Env.getCtx()));
+			boolean isDontSendToAddress = isTestEmail?false:
+				MSysConfig.getBooleanValue(MSysConfig.MAIL_DONT_SEND_TO_ADDRESS, false, Env.getAD_Client_ID(Env.getCtx()));
 
 			if (! isDontSendToAddress) {
 				InternetAddress[] rec = getTos();
@@ -316,7 +338,8 @@ public final class EMail implements Serializable
 				if (m_replyTo != null)
 					m_msg.setReplyTo(new Address[] {m_replyTo});
 			} else {
-				String bccAddressForAllMails = MSysConfig.getValue(MSysConfig.MAIL_SEND_BCC_TO_ADDRESS, Env.getAD_Client_ID(Env.getCtx()));
+				String bccAddressForAllMails = isTestEmail?null:
+					MSysConfig.getValue(MSysConfig.MAIL_SEND_BCC_TO_ADDRESS, Env.getAD_Client_ID(Env.getCtx()));
 				if (! Util.isEmpty(bccAddressForAllMails, true)) {
 					m_msg.setRecipients (Message.RecipientType.TO, bccAddressForAllMails);
 				}
@@ -603,7 +626,7 @@ public final class EMail implements Serializable
 		try
 		{
 			m_from = new InternetAddress (newFrom, true);
-			if (MSysConfig.getBooleanValue(MSysConfig.MAIL_SEND_BCC_TO_FROM, false, Env.getAD_Client_ID(Env.getCtx())))
+			if (!isTestEmail && MSysConfig.getBooleanValue(MSysConfig.MAIL_SEND_BCC_TO_FROM, false, Env.getAD_Client_ID(Env.getCtx())))
 				addBcc(newFrom);
 		}
 		catch (Exception e)
