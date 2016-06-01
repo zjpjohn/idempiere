@@ -1500,7 +1500,8 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
     
     @Override
     protected void executeQuery() {
-    	prepareTable();
+    	if (!isRequeryByRunSuccessProcess)
+    		prepareTable();
     	super.executeQuery();
     }
     
