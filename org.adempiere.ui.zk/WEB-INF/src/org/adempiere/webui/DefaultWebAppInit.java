@@ -17,6 +17,7 @@
  *****************************************************************************/
 package org.adempiere.webui;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -59,7 +60,7 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 	 * list listener handle update Env event.
 	 * listener group by session, desktop, window.
 	 */
-	private static Map<String, Map<String, Map<Integer, List<WebEnvUpdateListener>>>> updateEventListeners;
+	private static Map<String, Map<String, Map<Integer, List<WeakReference<WebEnvUpdateListener>>>>> updateEventListeners;
 	
 	/**
 	 * Register listen model change
@@ -242,16 +243,16 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		String sessionId = httpSession.getId();
 		
 		if (updateEventListeners == null){
-			updateEventListeners = new Hashtable<String, Map<String, Map<Integer,List<WebEnvUpdateListener>>>>();
+			updateEventListeners = new Hashtable<String, Map<String, Map<Integer,List<WeakReference<WebEnvUpdateListener>>>>>();
 		}		
 		
 		// all listener for current session
-		Map<String, Map<Integer, List<WebEnvUpdateListener>>> sessionMap = null;
+		Map<String, Map<Integer, List<WeakReference<WebEnvUpdateListener>>>> sessionMap = null;
 		 
 		if (!updateEventListeners.containsKey(sessionId)){
 			synchronized (sessionId) {
 				if (!updateEventListeners.containsKey(sessionId)){
-					sessionMap = new Hashtable<String, Map<Integer, List<WebEnvUpdateListener>>>();
+					sessionMap = new Hashtable<String, Map<Integer, List<WeakReference<WebEnvUpdateListener>>>>();
 					updateEventListeners.put(sessionId, sessionMap);
 				}
 			}			
@@ -260,12 +261,12 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		sessionMap = updateEventListeners.get(sessionId);
 		
 		// all listener for current desktop
-		Map<Integer, List<WebEnvUpdateListener>> desktopMap = null;
+		Map<Integer, List<WeakReference<WebEnvUpdateListener>>> desktopMap = null;
 		String desktopId = currentDesktop.getId();
 		if (!sessionMap.containsKey(desktopId)){
 			synchronized (desktopId) {
 				if (!sessionMap.containsKey(desktopId)){
-					desktopMap = new Hashtable<Integer, List<WebEnvUpdateListener>>();
+					desktopMap = new Hashtable<Integer, List<WeakReference<WebEnvUpdateListener>>>();
 					sessionMap.put(desktopId, desktopMap);
 				}
 			}
@@ -275,11 +276,11 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		
 		// all listener for window = windowNo
 		Integer windowIDObj = Integer.valueOf(windowNo);
-		List<WebEnvUpdateListener> windowList = null;
+		List<WeakReference<WebEnvUpdateListener>> windowList = null;
 		if (!desktopMap.containsKey(windowIDObj)){
 			synchronized (windowIDObj) {
 				if (!desktopMap.containsKey(windowIDObj)){
-					windowList = new ArrayList<WebEnvUpdateListener>();
+					windowList = new ArrayList<WeakReference<WebEnvUpdateListener>>();
 					desktopMap.put(windowIDObj, windowList);
 				}
 			}
@@ -290,8 +291,8 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		// add listener to list
 		if (!windowList.contains(listener)){
 			synchronized (windowList){
-				if (!windowList.contains(listener)){
-					windowList.add (listener);
+				if (!windowList.contains(listener.getWeakRef())){
+					windowList.add (listener.getWeakRef());
 				}
 			}
 		}
@@ -316,20 +317,20 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		
 		String sessionId = httpSession.getId();
 		
-		Map<String, Map<Integer, List<WebEnvUpdateListener>>> sessionMap = updateEventListeners.get(sessionId);
+		Map<String, Map<Integer, List<WeakReference<WebEnvUpdateListener>>>> sessionMap = updateEventListeners.get(sessionId);
 		if (sessionMap == null)
 			return true;
 		
-		Map<Integer, List<WebEnvUpdateListener>> desktopMap = sessionMap.get(currentDesktop.getId());
+		Map<Integer, List<WeakReference<WebEnvUpdateListener>>> desktopMap = sessionMap.get(currentDesktop.getId());
 		if (desktopMap == null)
 			return false;
 		
-		List<WebEnvUpdateListener> windowList = desktopMap.get(Integer.valueOf(windowNo));
+		List<WeakReference<WebEnvUpdateListener>> windowList = desktopMap.get(Integer.valueOf(windowNo));
 		if (windowList == null)
 			return false;
 		
 		synchronized (windowList){
-			return windowList.remove(listener);
+			return windowList.remove(listener.getWeakRef());
 		}
 	}
 	
@@ -350,7 +351,7 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		if (currentSession == null)
 			return;
 		
-		Map<String, Map<Integer, List<WebEnvUpdateListener>>> sessionMap = updateEventListeners.get(currentSession.getId());
+		Map<String, Map<Integer, List<WeakReference<WebEnvUpdateListener>>>> sessionMap = updateEventListeners.get(currentSession.getId());
 		if (sessionMap == null)
 			return;
 		
@@ -358,18 +359,20 @@ public class DefaultWebAppInit implements WebAppInit, IEnvUpdateListener {
 		if (currentDesktop == null)
 			return;
 		
-		Map<Integer, List<WebEnvUpdateListener>> desktopMap = sessionMap.get(currentDesktop.getId());
+		Map<Integer, List<WeakReference<WebEnvUpdateListener>>> desktopMap = sessionMap.get(currentDesktop.getId());
 		if (desktopMap == null)
 			return;
 		
-		List<WebEnvUpdateListener> lsListener = desktopMap.get(info.WindowNo);
+		List<WeakReference<WebEnvUpdateListener>> lsListener = desktopMap.get(info.WindowNo);
 		if (lsListener == null)
 			return;
 		
-		ListIterator<WebEnvUpdateListener> iterator = lsListener.listIterator();
+		ListIterator<WeakReference<WebEnvUpdateListener>> iterator = lsListener.listIterator();
 		if (iterator.hasNext()){
-			WebEnvUpdateListener listener = iterator.next();
-			listener.updateEnv(info);
+			WeakReference<WebEnvUpdateListener> listener = iterator.next();
+			WebEnvUpdateListener realListener = listener.get();
+			if (realListener != null)
+				realListener.updateEnv(info);
 		}
 		
 	}

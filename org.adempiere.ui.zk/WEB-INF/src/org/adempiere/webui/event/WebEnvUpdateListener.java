@@ -14,6 +14,8 @@
 
 package org.adempiere.webui.event;
 
+import java.lang.ref.WeakReference;
+
 import org.compiere.util.EnvUpdateEventInfo;
 import org.compiere.util.IEnvUpdateListener;
 
@@ -24,5 +26,5 @@ import org.compiere.util.IEnvUpdateListener;
  */
 public interface WebEnvUpdateListener {
 	public void updateEnv (EnvUpdateEventInfo info);
-
+	public WeakReference<WebEnvUpdateListener> getWeakRef ();
 }
