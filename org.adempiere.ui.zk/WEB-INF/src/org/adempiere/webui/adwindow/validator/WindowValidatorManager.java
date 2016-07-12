@@ -84,6 +84,10 @@ public class WindowValidatorManager implements BundleActivator, ServiceTrackerCu
 	
 	public void fireWindowValidatorEvent(WindowValidatorEvent event, Callback<Boolean> callback) {
 		ADWindow window = event.getWindow();
+		// when grid tab lie down at window but not adWindow (like WAccountDialog, WQuickEntry,...)
+		// don't call event handle
+		if (window == null)
+			return;
 		String uuid = window.getAD_Window_UU();
 		List<WindowValidator> list = validatorMap.get(uuid);
 		int listSize = list != null ? list.size() : 0;

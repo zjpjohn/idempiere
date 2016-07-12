@@ -1329,7 +1329,7 @@ DataStatusListener, IADTabpanel, IdSpace, IFieldEditorContainer
         	}
         }
         
-        if (GridTab.DEFAULT_STATUS_MESSAGE.equals(e.getAD_Message())){
+        if (GridTab.DEFAULT_STATUS_MESSAGE.equals(e.getAD_Message()) && ADWindow.get(windowNo) != null){
         	WindowValidatorEvent event = new WindowValidatorEvent(ADWindow.get(windowNo), WindowValidatorEventType.CHANGED_RECORD.getName());
         	WindowValidatorManager.getInstance().fireWindowValidatorEvent(event, null);
         }
