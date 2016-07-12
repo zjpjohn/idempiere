@@ -33,7 +33,7 @@ public class X_C_Order extends PO implements I_C_Order, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20151030L;
+	private static final long serialVersionUID = 20151224L;
 
     /** Standard Constructor */
     public X_C_Order (Properties ctx, int C_Order_ID, String trxName)
@@ -2123,6 +2123,27 @@ public class X_C_Order extends PO implements I_C_Order, I_Persistent
 		if (bd == null)
 			 return Env.ZERO;
 		return bd;
+	}
+
+	/** Set Tracking Info.
+		@param TrackingInfo Tracking Info	  */
+	public void setTrackingInfo (boolean TrackingInfo)
+	{
+		set_Value (COLUMNNAME_TrackingInfo, Boolean.valueOf(TrackingInfo));
+	}
+
+	/** Get Tracking Info.
+		@return Tracking Info	  */
+	public boolean isTrackingInfo () 
+	{
+		Object oo = get_Value(COLUMNNAME_TrackingInfo);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
 	}
 
 	public org.compiere.model.I_C_ElementValue getUser1() throws RuntimeException

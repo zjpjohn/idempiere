@@ -34,6 +34,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
+import vn.hsv.idempiere.base.util.ModelUtil;
+
 /**
  *  Physical Inventory Model
  *
@@ -517,7 +519,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 						if (log.isLoggable(Level.FINE)) log.fine("Diff=" + qtyDiff 
 								+ " - Instance OnHand=" + QtyMA + "->" + QtyNew);
 
-						if (!MStorageOnHand.add(getCtx(), getM_Warehouse_ID(),
+						if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(), getM_Warehouse_ID(),
 								line.getM_Locator_ID(),
 								line.getM_Product_ID(), 
 								ma.getM_AttributeSetInstance_ID(), 
@@ -531,7 +533,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 						// Only Update Date Last Inventory if is a Physical Inventory
 						if (MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(docSubTypeInv))
 						{	
-							MStorageOnHand storage = MStorageOnHand.get(getCtx(), line.getM_Locator_ID(), 
+							MStorageOnHand storage = MStorageOnHand.get(line.getOrderLineRefID(), getCtx(), line.getM_Locator_ID(), 
 									line.getM_Product_ID(), ma.getM_AttributeSetInstance_ID(),ma.getDateMaterialPolicy(),get_TrxName());						
 							storage.setDateLastInventory(getMovementDate());
 							if (!storage.save(get_TrxName()))
@@ -552,6 +554,9 @@ public class MInventory extends X_M_Inventory implements DocAction
 								QtyMA.negate(), getMovementDate(), get_TrxName());
 						
 							mtrx.setM_InventoryLine_ID(line.getM_InventoryLine_ID());
+							
+							ModelUtil.setOrderLinkForTransaction(line, mtrx);
+							
 							if (!mtrx.save())
 							{
 								m_processMsg = "Transaction not inserted(2)";
@@ -573,7 +578,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 						dateMPolicy =asi.getCreated();
 					
 					//Fallback: Update Storage - see also VMatch.createMatchRecord
-					if (!MStorageOnHand.add(getCtx(), getM_Warehouse_ID(),
+					if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(), getM_Warehouse_ID(),
 							line.getM_Locator_ID(),
 							line.getM_Product_ID(), 
 							line.getM_AttributeSetInstance_ID(), 
@@ -587,7 +592,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 					// Only Update Date Last Inventory if is a Physical Inventory
 					if (MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(docSubTypeInv))
 					{	
-						MStorageOnHand storage = MStorageOnHand.get(getCtx(), line.getM_Locator_ID(), 
+						MStorageOnHand storage = MStorageOnHand.get(line.getOrderLineRefID(), getCtx(), line.getM_Locator_ID(), 
 								line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),dateMPolicy, get_TrxName());						
 
 						storage.setDateLastInventory(getMovementDate());
@@ -608,6 +613,9 @@ public class MInventory extends X_M_Inventory implements DocAction
 							line.getM_Locator_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 							qtyDiff, getMovementDate(), get_TrxName());
 					mtrx.setM_InventoryLine_ID(line.getM_InventoryLine_ID());
+					
+					ModelUtil.setOrderLinkForTransaction(line, mtrx);
+					
 					if (!mtrx.save())
 					{
 						m_processMsg = "Transaction not inserted(2)";
@@ -668,7 +676,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 			if (qtyDiff.signum() > 0)	//	Incoming Trx
 			{
 				//auto balance negative on hand
-				MStorageOnHand[] storages = MStorageOnHand.getWarehouseNegative(getCtx(), getM_Warehouse_ID(), line.getM_Product_ID(), 0,
+				MStorageOnHand[] storages = MStorageOnHand.getWarehouseNegative(line.getOrderLineRefID(), getCtx(), getM_Warehouse_ID(), line.getM_Product_ID(), 0,
 						null, MClient.MMPOLICY_FiFo.equals(product.getMMPolicy()), line.getM_Locator_ID(), get_TrxName(), false);
 				for (MStorageOnHand storage : storages)
 				{

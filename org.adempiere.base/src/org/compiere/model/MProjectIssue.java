@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
@@ -156,6 +157,7 @@ public class MProjectIssue extends X_C_ProjectIssue
 		/** @todo Transaction */
 
 		//	**	Create Material Transactions **
+		// not yet use project, so don't update at here
 		MTransaction mTrx = new MTransaction (getCtx(), getAD_Org_ID(), 
 			MTransaction.MOVEMENTTYPE_WorkOrderPlus,
 			getM_Locator_ID(), getM_Product_ID(), getM_AttributeSetInstance_ID(),
@@ -170,8 +172,10 @@ public class MProjectIssue extends X_C_ProjectIssue
 			MAttributeSetInstance asi = new MAttributeSetInstance(getCtx(), getM_AttributeSetInstance_ID(), get_TrxName());
 			dateMPolicy = asi.getCreated();
 		}
+		if (0==0)
+			throw new AdempiereException("hieplq:if use project, have to modify at there");
 		
-		if (MStorageOnHand.add(getCtx(), loc.getM_Warehouse_ID(), getM_Locator_ID(), 
+		if (MStorageOnHand.add(0, 0, getCtx(), loc.getM_Warehouse_ID(), getM_Locator_ID(), 
 				getM_Product_ID(), getM_AttributeSetInstance_ID(),
 				getMovementQty().negate(),dateMPolicy, get_TrxName()))
 		{

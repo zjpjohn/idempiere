@@ -32,6 +32,8 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
+import vn.hsv.idempiere.base.util.ModelUtil;
+
 /**
  *	Inventory Movement Model
  *	
@@ -453,7 +455,7 @@ public class MMovement extends X_M_Movement implements DocAction
 						//
 						MLocator locator = new MLocator (getCtx(), line.getM_Locator_ID(), get_TrxName());
 						//Update Storage 
-						if (!MStorageOnHand.add(getCtx(),locator.getM_Warehouse_ID(),
+						if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locator.getM_Warehouse_ID(),
 								line.getM_Locator_ID(),
 								line.getM_Product_ID(), 
 								ma.getM_AttributeSetInstance_ID(),
@@ -472,7 +474,7 @@ public class MMovement extends X_M_Movement implements DocAction
 						}
 						//Update Storage 
 						MLocator locatorTo = new MLocator (getCtx(), line.getM_LocatorTo_ID(), get_TrxName());
-						if (!MStorageOnHand.add(getCtx(),locatorTo.getM_Warehouse_ID(),
+						if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locatorTo.getM_Warehouse_ID(),
 								line.getM_LocatorTo_ID(),
 								line.getM_Product_ID(), 
 								M_AttributeSetInstanceTo_ID,
@@ -489,6 +491,9 @@ public class MMovement extends X_M_Movement implements DocAction
 								line.getM_Locator_ID(), line.getM_Product_ID(), ma.getM_AttributeSetInstance_ID(),
 								ma.getMovementQty().negate(), getMovementDate(), get_TrxName());
 						trxFrom.setM_MovementLine_ID(line.getM_MovementLine_ID());
+						
+						ModelUtil.setOrderLinkForTransaction(line, trxFrom);
+						
 						if (!trxFrom.save())
 						{
 							m_processMsg = "Transaction From not inserted (MA)";
@@ -500,6 +505,9 @@ public class MMovement extends X_M_Movement implements DocAction
 								line.getM_LocatorTo_ID(), line.getM_Product_ID(), M_AttributeSetInstanceTo_ID,
 								ma.getMovementQty(), getMovementDate(), get_TrxName());
 						trxTo.setM_MovementLine_ID(line.getM_MovementLine_ID());
+						
+						ModelUtil.setOrderLinkForTransaction(line, trxTo);
+						
 						if (!trxTo.save())
 						{
 							m_processMsg = "Transaction To not inserted (MA)";
@@ -543,7 +551,7 @@ public class MMovement extends X_M_Movement implements DocAction
 
 					MLocator locator = new MLocator (getCtx(), line.getM_Locator_ID(), get_TrxName());
 					//Update Storage 
-					if (!MStorageOnHand.add(getCtx(),locator.getM_Warehouse_ID(),
+					if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locator.getM_Warehouse_ID(),
 							line.getM_Locator_ID(),
 							line.getM_Product_ID(), 
 							line.getM_AttributeSetInstance_ID(),
@@ -556,7 +564,7 @@ public class MMovement extends X_M_Movement implements DocAction
 
 					//Update Storage 
 					MLocator locatorTo = new MLocator (getCtx(), line.getM_LocatorTo_ID(), get_TrxName());
-					if (!MStorageOnHand.add(getCtx(),locatorTo.getM_Warehouse_ID(),
+					if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locatorTo.getM_Warehouse_ID(),
 							line.getM_LocatorTo_ID(),
 							line.getM_Product_ID(), 
 							line.getM_AttributeSetInstanceTo_ID(),
@@ -573,6 +581,9 @@ public class MMovement extends X_M_Movement implements DocAction
 							line.getM_Locator_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 							line.getMovementQty().negate(), getMovementDate(), get_TrxName());
 					trxFrom.setM_MovementLine_ID(line.getM_MovementLine_ID());
+					
+					ModelUtil.setOrderLinkForTransaction(line, trxFrom);
+					
 					if (!trxFrom.save())
 					{
 						m_processMsg = "Transaction From not inserted";
@@ -584,6 +595,9 @@ public class MMovement extends X_M_Movement implements DocAction
 							line.getM_LocatorTo_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstanceTo_ID(),
 							line.getMovementQty(), getMovementDate(), get_TrxName());
 					trxTo.setM_MovementLine_ID(line.getM_MovementLine_ID());
+					
+					ModelUtil.setOrderLinkForTransaction(line, trxTo);
+					
 					if (!trxTo.save())
 					{
 						m_processMsg = "Transaction To not inserted";
