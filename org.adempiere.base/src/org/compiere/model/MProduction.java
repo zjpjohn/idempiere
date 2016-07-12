@@ -22,10 +22,11 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
-import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ITrackingProduct;
 import vn.hsv.idempiere.base.util.ModelUtil;
+import vn.hsv.idempiere.base.util.NullProviderOrderInfo;
 
-public class MProduction extends X_M_Production implements DocAction, IOrderLineLink {
+public class MProduction extends X_M_Production implements DocAction, ITrackingProduct {
 	/**
 	 * 
 	 */
@@ -172,7 +173,7 @@ public class MProduction extends X_M_Production implements DocAction, IOrderLine
 			}
 		}
 
-		return errors.toString();
+		return errors.toString(); 
 	}
 	
 
@@ -333,8 +334,9 @@ public class MProduction extends X_M_Production implements DocAction, IOrderLine
 						{ 
 							MMPolicy = client.getMMPolicy();
 						}
-
-						storages = MStorageOnHand.getWarehouse(getCtx(), M_Warehouse_ID, BOMProduct_ID, 0, null,
+						if (1==1)
+							throw new AdempiereException("not for you. please go aways or call hieplq@hasuvimex.vn");
+						storages = MStorageOnHand.getWarehouse(new NullProviderOrderInfo(), getCtx(), M_Warehouse_ID, BOMProduct_ID, 0, null,
 								MProductCategory.MMPOLICY_FiFo.equals(MMPolicy), true, 0, get_TrxName());
 
 						MProductionLine BOMLine = null;
@@ -923,5 +925,20 @@ public class MProduction extends X_M_Production implements DocAction, IOrderLine
 	@Override
 	public int getOrderLineRefID() {
 		return getC_OrderLine_ID();
+	}
+	
+	@Override
+	public int getAsiID() {
+		return getM_AttributeSetInstance_ID();
+	}
+
+	@Override
+	public I_M_AttributeSetInstance getAsi() {
+		return getM_AttributeSetInstance();
+	}
+
+	@Override
+	public Boolean isMatchRequirementASI() {
+		return ModelUtil.implementCheckMatchRequirement (getM_Product());
 	}
 }

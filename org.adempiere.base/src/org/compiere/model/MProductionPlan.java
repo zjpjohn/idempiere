@@ -15,6 +15,8 @@ import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
+import vn.hsv.idempiere.base.util.NullProviderOrderInfo;
+
 /**
  * @author hengsin
  *
@@ -203,8 +205,10 @@ public class MProductionPlan extends X_M_ProductionPlan {
 						{ 
 							MMPolicy = client.getMMPolicy();
 						}
-
-						storages = MStorageOnHand.getWarehouse(getCtx(), M_Warehouse_ID, BOMProduct_ID, 0, null,
+						if (1==1)
+							throw new AdempiereException("not for you. please go aways or call hieplq@hasuvimex.vn");
+						
+						storages = MStorageOnHand.getWarehouse(new NullProviderOrderInfo(), getCtx(), M_Warehouse_ID, BOMProduct_ID, 0, null,
 								MProductCategory.MMPOLICY_FiFo.equals(MMPolicy), true, 0, get_TrxName());
 
 						MProductionLine BOMLine = null;

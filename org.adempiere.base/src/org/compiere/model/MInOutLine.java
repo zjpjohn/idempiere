@@ -28,7 +28,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
-import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ITrackingProduct;
 import vn.hsv.idempiere.base.util.ModelUtil;
 
 /**
@@ -41,7 +41,7 @@ import vn.hsv.idempiere.base.util.ModelUtil;
  *  		<li>BF [ 2784194 ] Check Warehouse-Locator conflict
  *  			https://sourceforge.net/tracker/?func=detail&aid=2784194&group_id=176962&atid=879332
  */
-public class MInOutLine extends X_M_InOutLine implements IOrderLineLink
+public class MInOutLine extends X_M_InOutLine implements ITrackingProduct
 {
 	/**
 	 *
@@ -748,6 +748,21 @@ public class MInOutLine extends X_M_InOutLine implements IOrderLineLink
 	@Override
 	public int getOrderLineRefID() {
 		return getM_InOut().isSOTrx()?getC_OrderLine_ID():getC_OrderLine_Ref_OrderLine_ID();
+	}
+
+	@Override
+	public int getAsiID() {
+		return getM_AttributeSetInstance_ID();
+	}
+
+	@Override
+	public I_M_AttributeSetInstance getAsi() {
+		return getM_AttributeSetInstance();
+	}
+
+	@Override
+	public Boolean isMatchRequirementASI() {
+		return ModelUtil.implementCheckMatchRequirement (getM_Product());
 	}
 
 }	//	MInOutLine

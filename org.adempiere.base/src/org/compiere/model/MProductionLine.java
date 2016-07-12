@@ -12,10 +12,12 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 
 import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ITrackingProduct;
 import vn.hsv.idempiere.base.util.ModelUtil;
+import vn.hsv.idempiere.base.util.NullProviderOrderInfo;
 
 
-public class MProductionLine extends X_M_ProductionLine {
+public class MProductionLine extends X_M_ProductionLine implements ITrackingProduct {
 	/**
 	 * 
 	 */
@@ -117,27 +119,25 @@ public class MProductionLine extends X_M_ProductionLine {
 					getM_Locator_ID(), getM_Product_ID(), asi.get_ID(), 
 					getMovementQty(), date, get_TrxName());
 			
-			IOrderLineLink orderInfoProvide = (MProduction)this.getM_Production();
-			
-			ModelUtil.setOrderLinkForTransaction(orderInfoProvide, matTrx);
+			ModelUtil.setOrderLinkForTransaction(this, matTrx);
 			
 			matTrx.setM_ProductionLine_ID(get_ID());
 			if ( !matTrx.save(get_TrxName()) ) {
 				log.log(Level.SEVERE, "Could not save transaction for " + toString());
 				errorString.append("Could not save transaction for " + toString() + "\n");
 			}
-			MStorageOnHand storage = MStorageOnHand.getCreate(orderInfoProvide.getOrderRefID(), orderInfoProvide.getOrderLineRefID(), getCtx(), getM_Locator_ID(),
+			MStorageOnHand storage = MStorageOnHand.getCreate(this, getCtx(), getM_Locator_ID(),
 					getM_Product_ID(), asi.get_ID(),dateMPolicy, get_TrxName());
-			storage.addQtyOnHand(getMovementQty());
+			storage.addQtyOnHand(this, getMovementQty());
 			if (log.isLoggable(Level.FINE))log.log(Level.FINE, "Created finished goods line " + getLine());
 			
 			return errorString.toString();
 		}
 		
 		// create transactions and update stock used in production
-		MStorageOnHand[] storages = MStorageOnHand.getAll( getCtx(), getM_Product_ID(),
-				getM_Locator_ID(), get_TrxName(), false, 0);
-		
+		 MStorageOnHand[]	storages = MStorageOnHand.getAll(this, getCtx(), getM_Product_ID(),
+					getM_Locator_ID(), get_TrxName(), false, 0);
+			
 		MProductionLineMA lineMA = null;
 		MTransaction matTrx = null;
 		BigDecimal qtyToMove = getMovementQty().negate();
@@ -179,6 +179,9 @@ public class MProductionLine extends X_M_ProductionLine {
 								getM_Locator_ID(), getM_Product_ID(), asi.get_ID(), 
 								lineQty.negate(), date, get_TrxName());
 						matTrx.setM_ProductionLine_ID(get_ID());
+						//TODO:IMPROVE:this is for material, so should have flag to check. not at all material need track by order line
+						// example for package box, it's ok, other not need
+						ModelUtil.setOrderLinkForTransaction(this, matTrx);
 						if ( !matTrx.save(get_TrxName()) ) {
 							log.log(Level.SEVERE, "Could not save transaction for " + toString());
 							errorString.append("Could not save transaction for " + toString() + "\n");
@@ -186,7 +189,7 @@ public class MProductionLine extends X_M_ProductionLine {
 							if (log.isLoggable(Level.FINE))log.log(Level.FINE, "Saved transaction for " + toString());
 						}
 						DB.getDatabase().forUpdate(storages[sl], 120);
-						storages[sl].addQtyOnHand(lineQty.negate());
+						storages[sl].addQtyOnHand(this, lineQty.negate());
 						qtyToMove = qtyToMove.subtract(lineQty);
 						if (log.isLoggable(Level.FINE))log.log(Level.FINE, getLine() + " Qty moved = " + lineQty + ", Remaining = " + qtyToMove );
 					}
@@ -209,7 +212,7 @@ public class MProductionLine extends X_M_ProductionLine {
 			else
 			{
 				//TODO:hieplq if use BOM, need define to detect which material is tracking by order
-				MStorageOnHand storage = MStorageOnHand.getCreate(0, 0, Env.getCtx(), getM_Locator_ID(), getM_Product_ID(), 
+				MStorageOnHand storage = MStorageOnHand.getCreate(new NullProviderOrderInfo(), Env.getCtx(), getM_Locator_ID(), getM_Product_ID(), 
 						asi.get_ID(), date, get_TrxName(), true);
 				
 				BigDecimal lineQty = qtyToMove;
@@ -240,13 +243,18 @@ public class MProductionLine extends X_M_ProductionLine {
 							getM_Locator_ID(), getM_Product_ID(), asi.get_ID(), 
 							lineQty.negate(), date, get_TrxName());
 					matTrx.setM_ProductionLine_ID(get_ID());
+					
+					//TODO:IMPROVE:this is for material, so should have flag to check. not at all material need track by order line
+					// example for package box, it's ok, other not need
+					ModelUtil.setOrderLinkForTransaction(this, matTrx);
+					
 					if ( !matTrx.save(get_TrxName()) ) {
 						log.log(Level.SEVERE, "Could not save transaction for " + toString());
 						errorString.append("Could not save transaction for " + toString() + "\n");
 					} else {
 						if (log.isLoggable(Level.FINE))log.log(Level.FINE, "Saved transaction for " + toString());
 					}
-					storage.addQtyOnHand(lineQty.negate());
+					storage.addQtyOnHand(this, lineQty.negate());
 					qtyToMove = qtyToMove.subtract(lineQty);
 					if (log.isLoggable(Level.FINE))log.log(Level.FINE, getLine() + " Qty moved = " + lineQty + ", Remaining = " + qtyToMove );
 				} else {
@@ -336,6 +344,41 @@ public class MProductionLine extends X_M_ProductionLine {
 		
 		deleteMA();
 		return true;
+	}
+	
+	@Override
+	public int getAsiID() {
+		return getM_AttributeSetInstance_ID();
+	}
+
+	@Override
+	public I_M_AttributeSetInstance getAsi() {
+		return getM_AttributeSetInstance();
+	}
+
+	@Override
+	public I_C_OrderLine getOrderLineRef() {
+		return ((IOrderLineLink)getM_Production()).getOrderLineRef();
+	}
+
+	@Override
+	public I_C_Order getOrderRef() {
+		return ((IOrderLineLink)getM_Production()).getOrderRef();
+	}
+
+	@Override
+	public int getOrderLineRefID() {
+		return ((IOrderLineLink)getM_Production()).getOrderLineRefID();
+	}
+
+	@Override
+	public int getOrderRefID() {
+		return ((IOrderLineLink)getM_Production()).getOrderRefID();
+	}
+
+	@Override
+	public Boolean isMatchRequirementASI() {
+		return ModelUtil.implementCheckMatchRequirement (getM_Product());
 	}
 	
 }

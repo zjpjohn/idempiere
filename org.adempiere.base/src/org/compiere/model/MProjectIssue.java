@@ -175,7 +175,7 @@ public class MProjectIssue extends X_C_ProjectIssue
 		if (0==0)
 			throw new AdempiereException("hieplq:if use project, have to modify at there");
 		
-		if (MStorageOnHand.add(0, 0, getCtx(), loc.getM_Warehouse_ID(), getM_Locator_ID(), 
+		if (MStorageOnHand.add(null, getCtx(), loc.getM_Warehouse_ID(), getM_Locator_ID(), 
 				getM_Product_ID(), getM_AttributeSetInstance_ID(),
 				getMovementQty().negate(),dateMPolicy, get_TrxName()))
 		{

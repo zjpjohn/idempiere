@@ -455,7 +455,7 @@ public class MMovement extends X_M_Movement implements DocAction
 						//
 						MLocator locator = new MLocator (getCtx(), line.getM_Locator_ID(), get_TrxName());
 						//Update Storage 
-						if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locator.getM_Warehouse_ID(),
+						if (!MStorageOnHand.add(line, getCtx(),locator.getM_Warehouse_ID(),
 								line.getM_Locator_ID(),
 								line.getM_Product_ID(), 
 								ma.getM_AttributeSetInstance_ID(),
@@ -474,7 +474,7 @@ public class MMovement extends X_M_Movement implements DocAction
 						}
 						//Update Storage 
 						MLocator locatorTo = new MLocator (getCtx(), line.getM_LocatorTo_ID(), get_TrxName());
-						if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locatorTo.getM_Warehouse_ID(),
+						if (!MStorageOnHand.add(line, getCtx(),locatorTo.getM_Warehouse_ID(),
 								line.getM_LocatorTo_ID(),
 								line.getM_Product_ID(), 
 								M_AttributeSetInstanceTo_ID,
@@ -522,13 +522,13 @@ public class MMovement extends X_M_Movement implements DocAction
 					MStorageOnHand[] storages = null;
 					if (line.getMovementQty().compareTo(Env.ZERO) > 0) {
 						// Find Date Material Policy bases on ASI
-						storages = MStorageOnHand.getWarehouse(getCtx(), 0,
+						storages = MStorageOnHand.getWarehouse(line, getCtx(), 0,
 								line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(), null,
 								MClient.MMPOLICY_FiFo.equals(product.getMMPolicy()), false,
 								line.getM_Locator_ID(), get_TrxName());
 					} else {
 						//Case of reversal
-						storages = MStorageOnHand.getWarehouse(getCtx(), 0,
+						storages = MStorageOnHand.getWarehouse(line, getCtx(), 0,
 								line.getM_Product_ID(), line.getM_AttributeSetInstanceTo_ID(), null,
 								MClient.MMPOLICY_FiFo.equals(product.getMMPolicy()), false,
 								line.getM_LocatorTo_ID(), get_TrxName());
@@ -551,7 +551,7 @@ public class MMovement extends X_M_Movement implements DocAction
 
 					MLocator locator = new MLocator (getCtx(), line.getM_Locator_ID(), get_TrxName());
 					//Update Storage 
-					if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locator.getM_Warehouse_ID(),
+					if (!MStorageOnHand.add(line, getCtx(),locator.getM_Warehouse_ID(),
 							line.getM_Locator_ID(),
 							line.getM_Product_ID(), 
 							line.getM_AttributeSetInstance_ID(),
@@ -564,7 +564,7 @@ public class MMovement extends X_M_Movement implements DocAction
 
 					//Update Storage 
 					MLocator locatorTo = new MLocator (getCtx(), line.getM_LocatorTo_ID(), get_TrxName());
-					if (!MStorageOnHand.add(line.getOrderRefID(), line.getOrderLineRefID(), getCtx(),locatorTo.getM_Warehouse_ID(),
+					if (!MStorageOnHand.add(line, getCtx(),locatorTo.getM_Warehouse_ID(),
 							line.getM_LocatorTo_ID(),
 							line.getM_Product_ID(), 
 							line.getM_AttributeSetInstanceTo_ID(),
@@ -658,7 +658,7 @@ public class MMovement extends X_M_Movement implements DocAction
 						
 			MProduct product = MProduct.get(getCtx(), line.getM_Product_ID());
 			String MMPolicy = product.getMMPolicy();
-			MStorageOnHand[] storages = MStorageOnHand.getWarehouse(getCtx(), 0, line.getM_Product_ID(), 0, 
+			MStorageOnHand[] storages = MStorageOnHand.getWarehouse(line, getCtx(), 0, line.getM_Product_ID(), 0, 
 					null, MClient.MMPOLICY_FiFo.equals(MMPolicy), true, line.getM_Locator_ID(), get_TrxName());
 
 

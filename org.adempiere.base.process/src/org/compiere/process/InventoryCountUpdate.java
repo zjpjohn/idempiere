@@ -146,7 +146,7 @@ public class InventoryCountUpdate extends SvrProcess
 			{
 				MInventoryLine il = new MInventoryLine (getCtx(), rs, get_TrxName());
 				BigDecimal onHand = Env.ZERO;
-				MStorageOnHand[] storages = MStorageOnHand.getAll(getCtx(), il.getM_Product_ID(), il.getM_Locator_ID(), get_TrxName());
+				MStorageOnHand[] storages = MStorageOnHand.getAll(il, getCtx(), il.getM_Product_ID(), il.getM_Locator_ID(), get_TrxName());
 				MInventoryLineMA ma = null;
 				for (int i = 0; i < storages.length; i++)
 				{

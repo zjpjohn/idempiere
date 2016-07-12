@@ -10,7 +10,10 @@ import org.compiere.model.X_M_ProductionLineMA;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
-public class MProductionLineMA extends X_M_ProductionLineMA {
+import vn.hsv.idempiere.base.util.ITrackingProduct;
+import vn.hsv.idempiere.base.util.ModelUtil;
+
+public class MProductionLineMA extends X_M_ProductionLineMA implements ITrackingProduct{
 	/**
 	 * 
 	 */
@@ -78,4 +81,39 @@ public class MProductionLineMA extends X_M_ProductionLineMA {
 				Env.ZERO,dateMPolicy);
 	}
 
+
+	@Override
+	public int getAsiID() {
+		return getM_AttributeSetInstance_ID();
+	}
+
+	@Override
+	public I_M_AttributeSetInstance getAsi() {
+		return getM_AttributeSetInstance();
+	}
+
+	@Override
+	public I_C_OrderLine getOrderLineRef() {
+		return ModelUtil.implementGetOrderLineRefFromParent((MProductionLine)getM_ProductionLine());
+	}
+
+	@Override
+	public I_C_Order getOrderRef() {
+		return ModelUtil.implementGetOrderRefFromParent((MProductionLine)getM_ProductionLine());
+	}
+
+	@Override
+	public int getOrderLineRefID() {
+		return ModelUtil.implementGetOrderLineRefIDFromParent((MProductionLine)getM_ProductionLine());
+	}
+
+	@Override
+	public int getOrderRefID() {
+		return ModelUtil.implementGetOrderRefIDFromParent((MProductionLine)getM_ProductionLine());
+	}
+
+	@Override
+	public Boolean isMatchRequirementASI() {
+		return ModelUtil.implementCheckMatchRequirement (getM_ProductionLine().getM_Product());
+	}
 }

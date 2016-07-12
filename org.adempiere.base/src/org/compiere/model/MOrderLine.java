@@ -31,6 +31,9 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
+import vn.hsv.idempiere.base.util.ITrackingProduct;
+import vn.hsv.idempiere.base.util.ModelUtil;
+
 /**
  *  Order Line Model.
  * 	<code>
@@ -53,7 +56,7 @@ import org.compiere.util.Msg;
  * 				invoice line for a product on a price list that includes tax, the net amount is
  * 				incorrectly calculated.
  */
-public class MOrderLine extends X_C_OrderLine
+public class MOrderLine extends X_C_OrderLine implements ITrackingProduct
 {
 	/**
 	 * 
@@ -1102,5 +1105,40 @@ public class MOrderLine extends X_C_OrderLine
 	public void clearParent()
 	{
 		this.m_parent = null;
+	}
+
+	@Override
+	public int getAsiID() {
+		return getM_AttributeSetInstance_ID();
+	}
+
+	@Override
+	public I_M_AttributeSetInstance getAsi() {
+		return getM_AttributeSetInstance();
+	}
+
+	@Override
+	public I_C_OrderLine getOrderLineRef() {
+		return getC_OrderLine_Ref_OrderLine();
+	}
+
+	@Override
+	public I_C_Order getOrderRef() {
+		return ModelUtil.implementGetOrderRef (this);
+	}
+
+	@Override
+	public int getOrderLineRefID() {
+		return getC_OrderLine_Ref_OrderLine_ID();
+	}
+
+	@Override
+	public int getOrderRefID() {
+		return ModelUtil.implementGetOrderRefID(this);
+	}
+
+	@Override
+	public Boolean isMatchRequirementASI() {
+		return ModelUtil.implementCheckMatchRequirement (getM_Product());
 	}
 }	//	MOrderLine
