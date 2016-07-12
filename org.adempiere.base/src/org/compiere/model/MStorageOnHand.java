@@ -102,8 +102,8 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		
 		if (dateMPolicy != null)
 			listParameter.add(dateMPolicy);
-		
-		listParameter.add(provideOrderInfo.getOrderLineRefID());
+		if (ModelUtil.isTrackingByOrderLine(provideOrderInfo))
+			listParameter.add(provideOrderInfo.getOrderLineRefID());
 		query.setParameters(listParameter);
 		MStorageOnHand retValue = query.first();
 		
@@ -361,7 +361,8 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			{
 				pstmt.setTimestamp(indexPara++, minGuaranteeDate);
 			}
-			pstmt.setInt(indexPara++, provideOrderInfo.getOrderLineRefID());
+			if (ModelUtil.isTrackingByOrderLine(provideOrderInfo))
+				pstmt.setInt(indexPara++, provideOrderInfo.getOrderLineRefID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{	
@@ -516,7 +517,8 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			{
 				pstmt.setTimestamp(paraIndex++, minGuaranteeDate);
 			}
-			pstmt.setInt(paraIndex++, provideOrderInfo.getOrderLineRefID());
+			if (ModelUtil.isTrackingByOrderLine(provideOrderInfo))
+				pstmt.setInt(paraIndex++, provideOrderInfo.getOrderLineRefID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{	
@@ -712,7 +714,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param trxName transaction
 	 * 	@return id
 	 */
-	public static int getM_Locator_ID (int M_Warehouse_ID, 
+	public static int getM_Locator_ID (ITrackingProduct provideOrderInfo, int M_Warehouse_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID, BigDecimal Qty,
 		String trxName)
 	{
@@ -726,6 +728,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			+ "WHERE l.M_Warehouse_ID=?"
 			+ " AND s.M_Product_ID=?"
 			+ " AND (mas.IsInstanceAttribute IS NULL OR mas.IsInstanceAttribute='N' OR s.M_AttributeSetInstance_ID=?)"
+			+ " AND COALESCE (s.C_OrderLine_ID, 0) = ?"
 			+ " AND l.IsActive='Y' "
 			+ "ORDER BY l.PriorityNo DESC, s.QtyOnHand DESC";
 		
@@ -737,6 +740,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			pstmt.setInt(1, M_Warehouse_ID);
 			pstmt.setInt(2, M_Product_ID);
 			pstmt.setInt(3, M_AttributeSetInstance_ID);
+			pstmt.setInt(4, provideOrderInfo.getOrderLineRefID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
@@ -855,8 +859,9 @@ public class MStorageOnHand extends X_M_StorageOnHand
 					+ "WHERE s.M_Product_ID=?"		//	#1
 					+ " AND l.M_Warehouse_ID=?"
 					+ " AND l.M_Locator_ID=?"
-					+ " AND s.M_AttributeSetInstance_ID<>?";
-				BigDecimal QtyOnHand = DB.getSQLValueBDEx(get_TrxName(), sql, new Object[] {getM_Product_ID(), getM_Warehouse_ID(), getM_Locator_ID(), getM_AttributeSetInstance_ID()});
+					+ " AND (s.M_AttributeSetInstance_ID<>?"
+					+ " OR COALESCE (s.C_OrderLine_ID, 0) <> ?)";
+				BigDecimal QtyOnHand = DB.getSQLValueBDEx(get_TrxName(), sql, new Object[] {getM_Product_ID(), getM_Warehouse_ID(), getM_Locator_ID(), getM_AttributeSetInstance_ID(), getC_OrderLine_ID()});
 				if (QtyOnHand == null)
 					QtyOnHand = Env.ZERO;
 				

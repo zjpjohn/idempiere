@@ -63,6 +63,7 @@ public class CalloutInventory extends CalloutEngine
 		Integer M_Product_ID = (Integer)mTab.getValue("M_Product_ID");
 		Integer M_Locator_ID = (Integer)mTab.getValue("M_Locator_ID");		
 		Integer M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
+		Integer M_OrderLine_ID = (Integer)mTab.getValue(MInventoryLine.COLUMNNAME_C_OrderLine_ID);
 
 		// Check ASI - if product has been changed remove old ASI
 		if (MInventoryLine.COLUMNNAME_M_Product_ID.equalsIgnoreCase(mField.getColumnName())) {
@@ -77,7 +78,7 @@ public class CalloutInventory extends CalloutEngine
 			}
 			
 			try {
-				bd = setQtyBook(M_AttributeSetInstance_ID, M_Product_ID, M_Locator_ID);
+				bd = setQtyBook(M_AttributeSetInstance_ID, M_Product_ID, M_Locator_ID, M_OrderLine_ID==null?0:M_OrderLine_ID);
 				mTab.setValue("QtyBook", bd);
 			} catch (Exception e) {
 				return e.getLocalizedMessage();
@@ -104,26 +105,30 @@ public class CalloutInventory extends CalloutEngine
 	 * @return
 	 * @throws Exception
 	 */
-	private BigDecimal setQtyBook (int M_AttributeSetInstance_ID, int M_Product_ID, int M_Locator_ID) throws Exception {
+	private BigDecimal setQtyBook (int M_AttributeSetInstance_ID, int M_Product_ID, int M_Locator_ID, int orderLineID) throws Exception {
 		// Set QtyBook from first storage location
 		BigDecimal bd = null;
 		String sql = "SELECT QtyOnHand FROM M_StorageOnHand "
 			+ "WHERE M_Product_ID=?"	//	1
 			+ " AND M_Locator_ID=?"		//	2
-			+ " AND M_AttributeSetInstance_ID=?";
+			+ " AND M_AttributeSetInstance_ID=?"
+			+ " AND COALESCE (C_OrderLine_ID, 0)=?";
 		if (M_AttributeSetInstance_ID == 0)
 			sql = "SELECT SUM(QtyOnHand) FROM M_StorageOnHand "
 			+ "WHERE M_Product_ID=?"	//	1
-			+ " AND M_Locator_ID=?";	//	2
+			+ " AND M_Locator_ID=?"	//	2
+		    + " AND COALESCE (C_OrderLine_ID, 0)=?";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
 			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, M_Product_ID);
-			pstmt.setInt(2, M_Locator_ID);
+			int paraIndex = 1;
+			pstmt.setInt(paraIndex++, M_Product_ID);
+			pstmt.setInt(paraIndex++, M_Locator_ID);
 			if (M_AttributeSetInstance_ID != 0)
-				pstmt.setInt(3, M_AttributeSetInstance_ID);
+				pstmt.setInt(paraIndex++, M_AttributeSetInstance_ID);
+			pstmt.setInt(paraIndex, orderLineID);
 			rs = pstmt.executeQuery();
 			if (rs.next())
 			{

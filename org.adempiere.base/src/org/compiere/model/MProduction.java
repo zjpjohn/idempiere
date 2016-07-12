@@ -334,9 +334,10 @@ public class MProduction extends X_M_Production implements DocAction, ITrackingP
 						{ 
 							MMPolicy = client.getMMPolicy();
 						}
-						if (1==1)
-							throw new AdempiereException("not for you. please go aways or call hieplq@hasuvimex.vn");
-						storages = MStorageOnHand.getWarehouse(new NullProviderOrderInfo(), getCtx(), M_Warehouse_ID, BOMProduct_ID, 0, null,
+						if (String.valueOf(1).equals("1")){
+							throw new AdempiereException("something wrong, contact with hieplq@hasuvimex.vn");
+						}
+						storages = MStorageOnHand.getWarehouse(NullProviderOrderInfo.NULL, getCtx(), M_Warehouse_ID, BOMProduct_ID, 0, null,
 								MProductCategory.MMPOLICY_FiFo.equals(MMPolicy), true, 0, get_TrxName());
 
 						MProductionLine BOMLine = null;
@@ -753,6 +754,8 @@ public class MProduction extends X_M_Production implements DocAction, ITrackingP
 		to.setProcessing(false);
 		to.setProcessed(false);
 		to.setIsUseProductionPlan(isUseProductionPlan());
+		to.setM_AttributeSetInstance_ID(getM_AttributeSetInstance_ID());
+		to.setC_OrderLine_ID(getC_OrderLine_ID());
 		if (isUseProductionPlan()) {
 			to.saveEx();
 			Query planQuery = new Query(Env.getCtx(), I_M_ProductionPlan.Table_Name, "M_ProductionPlan.M_Production_ID=?", get_TrxName());
@@ -761,6 +764,8 @@ public class MProduction extends X_M_Production implements DocAction, ITrackingP
 				MProductionPlan tplan = new MProductionPlan(getCtx(), 0, get_TrxName());
 				PO.copyValues (fplan, tplan, getAD_Client_ID(), getAD_Org_ID());
 				tplan.setM_Production_ID(to.getM_Production_ID());
+				tplan.setM_AttributeSetInstance_ID(fplan.getM_AttributeSetInstance_ID());
+				tplan.setC_OrderLine_ID(fplan.getC_OrderLine_ID());
 				tplan.setProductionQty(fplan.getProductionQty().negate());
 				tplan.setProcessed(false);
 				tplan.saveEx();
@@ -773,6 +778,7 @@ public class MProduction extends X_M_Production implements DocAction, ITrackingP
 					tline.setMovementQty(fline.getMovementQty().negate());
 					tline.setPlannedQty(fline.getPlannedQty().negate());
 					tline.setQtyUsed(fline.getQtyUsed().negate());
+					tline.setM_AttributeSetInstance_ID(fline.getM_AttributeSetInstance_ID());
 					tline.saveEx();
 				}
 			}
@@ -786,6 +792,7 @@ public class MProduction extends X_M_Production implements DocAction, ITrackingP
 				tline.setM_Production_ID(to.getM_Production_ID());
 				tline.setMovementQty(fline.getMovementQty().negate());
 				tline.setPlannedQty(fline.getPlannedQty().negate());
+				tline.setM_AttributeSetInstance_ID(fline.getM_AttributeSetInstance_ID());
 				tline.setQtyUsed(fline.getQtyUsed().negate());
 				tline.saveEx();
 			}

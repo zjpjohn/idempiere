@@ -39,6 +39,14 @@ public class ModelUtil {
 		return false;
 	}
 	
+	public static boolean isTrackingByOrderLine (IOrderLineLink provideOrderInfo){
+		if (provideOrderInfo.getOrderRef() == null){
+			return false;
+		}
+		
+		return provideOrderInfo.getOrderRef().isTrackingInfo();
+	}
+	
 	public static void setOrderLinkForTransaction (IOrderLineLink provideOrderInfo, MTransaction transaction){
 		I_C_OrderLine olRef = provideOrderInfo.getOrderLineRef();
 		if (olRef != null && olRef.getC_OrderLine_ID() != 0){
@@ -118,6 +126,10 @@ public class ModelUtil {
 	}
 	
 	public static String appendOrderClause (String tableAlias, String sqlWhere, ITrackingProduct provideOrderInfo, boolean appendAnd){
+		if (!isTrackingByOrderLine (provideOrderInfo)){
+			return sqlWhere;
+		}
+		
 		String clName = I_M_StorageOnHand.COLUMNNAME_C_OrderLine_ID;
 		if (tableAlias != null && tableAlias.trim().length() > 0)
 			clName = tableAlias + "." + clName;

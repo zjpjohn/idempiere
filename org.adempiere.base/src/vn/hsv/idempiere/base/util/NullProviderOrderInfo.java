@@ -24,6 +24,8 @@ import org.compiere.model.I_M_AttributeSetInstance;
  */
 public class NullProviderOrderInfo implements ITrackingProduct {
 
+	public static NullProviderOrderInfo NULL = new NullProviderOrderInfo();
+	
 	/* (non-Javadoc)
 	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getOrderLineRef()
 	 */
