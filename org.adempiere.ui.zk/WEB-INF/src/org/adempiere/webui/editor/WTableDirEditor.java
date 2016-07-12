@@ -75,15 +75,15 @@ ContextMenuListener, IZoomableEditor
     public final static String[] LISTENER_EVENTS = {Events.ON_SELECT};
     
     @SuppressWarnings("unused")
-	private static final CLogger logger;
+	protected static final CLogger logger;
     
     static
     {
         logger = CLogger.getCLogger(WTableDirEditor.class);
     }
     
-    private Lookup  lookup;
-    private Object oldValue;
+    protected Lookup  lookup;
+    protected Object oldValue;
 
     public static final String SHORT_LIST_EVENT = "SHORT_LIST";	// IDEMPIERE 90
     protected boolean onlyShortListItems;	// IDEMPIERE 90
@@ -260,6 +260,7 @@ ContextMenuListener, IZoomableEditor
         return retVal;
     }
 
+    
     public void setValue(Object value)
     {
     	if (onselecting) {
@@ -327,7 +328,7 @@ ContextMenuListener, IZoomableEditor
 		getComponent().setButtonVisible(readWrite);
 	}
 
-	private void refreshList()
+	protected void refreshList()
     {
     	if (getComponent().getItemCount() > 0)
     		getComponent().removeAllItems();
