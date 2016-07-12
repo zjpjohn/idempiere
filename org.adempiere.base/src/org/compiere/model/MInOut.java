@@ -84,6 +84,9 @@ public class MInOut extends X_M_InOut implements DocAction
 	{		
 		if (order == null)
 			throw new IllegalArgumentException("No Order");
+		
+		if (1==1)
+			throw new IllegalArgumentException("Contact with Hieplq@hasuvimex.vn for this case");
 		//
 		if (!forceDelivery && DELIVERYRULE_CompleteLine.equals(order.getDeliveryRule()))
 		{
@@ -109,7 +112,9 @@ public class MInOut extends X_M_InOut implements DocAction
 			if (product != null && product.get_ID() != 0 && product.isStocked())
 			{
 				String MMPolicy = product.getMMPolicy();
-				storages = MStorageOnHand.getWarehouse (order.getCtx(), order.getM_Warehouse_ID(),
+				if (1==1)
+					throw new AdempiereException("it have to be done soon, please contact with hieplq@hasuvimex.vn");
+				storages = MStorageOnHand.getWarehouse (null, order.getCtx(), order.getM_Warehouse_ID(),
 					oLines[i].getM_Product_ID(), oLines[i].getM_AttributeSetInstance_ID(),
 					minGuaranteeDate, MClient.MMPOLICY_FiFo.equals(MMPolicy), true, 0, trxName);
 			} else {
@@ -1381,7 +1386,7 @@ public class MInOut extends X_M_InOut implements DocAction
 							QtyMA = QtyMA.negate();
 
 						//	Update Storage - see also VMatch.createMatchRecord
-						if (!MStorageOnHand.add(sLine.getOrderRefID(), sLine.getOrderLineRefID(), getCtx(), getM_Warehouse_ID(),
+						if (!MStorageOnHand.add(sLine, getCtx(), getM_Warehouse_ID(),
 							sLine.getM_Locator_ID(),
 							sLine.getM_Product_ID(),
 							ma.getM_AttributeSetInstance_ID(),
@@ -1463,7 +1468,7 @@ public class MInOut extends X_M_InOut implements DocAction
 						dateMPolicy = getMovementDate();
 					
 					//	Fallback: Update Storage - see also VMatch.createMatchRecord
-					if (!MStorageOnHand.add(sLine.getOrderRefID(), sLine.getOrderLineRefID(), getCtx(), getM_Warehouse_ID(),
+					if (!MStorageOnHand.add(sLine, getCtx(), getM_Warehouse_ID(),
 						sLine.getM_Locator_ID(),
 						sLine.getM_Product_ID(),
 						sLine.getM_AttributeSetInstance_ID(),
@@ -1881,7 +1886,7 @@ public class MInOut extends X_M_InOut implements DocAction
 			{
 				String MMPolicy = product.getMMPolicy();
 				Timestamp minGuaranteeDate = getMovementDate();
-				MStorageOnHand[] storages = MStorageOnHand.getWarehouse(getCtx(), getM_Warehouse_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
+				MStorageOnHand[] storages = MStorageOnHand.getWarehouse(line, getCtx(), getM_Warehouse_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 						minGuaranteeDate, MClient.MMPOLICY_FiFo.equals(MMPolicy), true, line.getM_Locator_ID(), get_TrxName(), false);
 				BigDecimal qtyToDeliver = qty;
 				for (MStorageOnHand storage: storages)
@@ -1925,7 +1930,7 @@ public class MInOut extends X_M_InOut implements DocAction
 	}	//	checkMaterialPolicy
 
 	protected BigDecimal autoBalanceNegative(MInOutLine line, MProduct product,BigDecimal qtyToReceive) {
-		MStorageOnHand[] storages = MStorageOnHand.getWarehouseNegative(line.getC_OrderLine_ID(), getCtx(), getM_Warehouse_ID(), line.getM_Product_ID(), 0,
+		MStorageOnHand[] storages = MStorageOnHand.getWarehouseNegative(line, getCtx(), getM_Warehouse_ID(), line.getM_Product_ID(), 0,
 				null, MClient.MMPOLICY_FiFo.equals(product.getMMPolicy()), line.getM_Locator_ID(), get_TrxName(), false);
 		
 		Timestamp dateMPolicy = null;

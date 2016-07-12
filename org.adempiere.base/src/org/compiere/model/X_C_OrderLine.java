@@ -33,7 +33,7 @@ public class X_C_OrderLine extends PO implements I_C_OrderLine, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20151030L;
+	private static final long serialVersionUID = 20160105L;
 
     /** Standard Constructor */
     public X_C_OrderLine (Properties ctx, int C_OrderLine_ID, String trxName)
@@ -355,6 +355,31 @@ public class X_C_OrderLine extends PO implements I_C_OrderLine, I_Persistent
 		return ii.intValue();
 	}
 
+	public org.compiere.model.I_C_OrderLine getC_OrderLine_Ref_OrderLine() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_OrderLine)MTable.get(getCtx(), org.compiere.model.I_C_OrderLine.Table_Name)
+			.getPO(getC_OrderLine_Ref_OrderLine_ID(), get_TrxName());	}
+
+	/** Set c_orderline_ref_orderline_id.
+		@param C_OrderLine_Ref_OrderLine_ID c_orderline_ref_orderline_id	  */
+	public void setC_OrderLine_Ref_OrderLine_ID (int C_OrderLine_Ref_OrderLine_ID)
+	{
+		if (C_OrderLine_Ref_OrderLine_ID < 1) 
+			set_Value (COLUMNNAME_C_OrderLine_Ref_OrderLine_ID, null);
+		else 
+			set_Value (COLUMNNAME_C_OrderLine_Ref_OrderLine_ID, Integer.valueOf(C_OrderLine_Ref_OrderLine_ID));
+	}
+
+	/** Get c_orderline_ref_orderline_id.
+		@return c_orderline_ref_orderline_id	  */
+	public int getC_OrderLine_Ref_OrderLine_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_OrderLine_Ref_OrderLine_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
 	/** Set C_OrderLine_UU.
 		@param C_OrderLine_UU C_OrderLine_UU	  */
 	public void setC_OrderLine_UU (String C_OrderLine_UU)
@@ -640,6 +665,22 @@ public class X_C_OrderLine extends PO implements I_C_OrderLine, I_Persistent
 		if (bd == null)
 			 return Env.ZERO;
 		return bd;
+	}
+
+	/** Set Document No.
+		@param DocumentNo 
+		Document sequence number of the document
+	  */
+	public void setDocumentNo (String DocumentNo)
+	{
+		throw new IllegalArgumentException ("DocumentNo is virtual column");	}
+
+	/** Get Document No.
+		@return Document sequence number of the document
+	  */
+	public String getDocumentNo () 
+	{
+		return (String)get_Value(COLUMNNAME_DocumentNo);
 	}
 
 	/** Set Freight Amount.

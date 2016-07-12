@@ -166,7 +166,7 @@ public class M_Production_Run extends SvrProcess {
 							}
 							if (1==1)
 								throw new AdempiereException("this process is deprecate, so don't fix to tracking by order");
-							if (!MStorageOnHand.add(0, 0, getCtx(), locator.getM_Warehouse_ID(),
+							if (!MStorageOnHand.add(null, getCtx(), locator.getM_Warehouse_ID(),
 								locator.getM_Locator_ID(),
 								pline.getM_Product_ID(), 
 								pline.getM_AttributeSetInstance_ID(),

@@ -34,6 +34,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
+import vn.hsv.idempiere.base.util.ITrackingProduct;
 import vn.hsv.idempiere.base.util.ModelUtil;
 
 /**
@@ -50,21 +51,6 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	private static final long serialVersionUID = -3820729340100521329L;
 
 	/**
-	 * 
-	 * @param ctx
-	 * @param M_Locator_ID
-	 * @param M_Product_ID
-	 * @param M_AttributeSetInstance_ID
-	 * @param trxName
-	 * @deprecated
-	 * @return MStorageOnHand
-	 */
-	public static MStorageOnHand get (int orderLineID, Properties ctx, int M_Locator_ID, 
-			int M_Product_ID, int M_AttributeSetInstance_ID, String trxName) {
-		return get (orderLineID, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, null, trxName);
-	}
-
-	/**
 	 * 	Get Storage Info
 	 *	@param ctx context
 	 *	@param M_Locator_ID locator
@@ -74,12 +60,17 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param trxName transaction
 	 *	@return existing or null
 	 */
-	public static MStorageOnHand get (int orderLineID, Properties ctx, int M_Locator_ID, 
+	public static MStorageOnHand get (ITrackingProduct provideOrderInfo, Properties ctx, int M_Locator_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID,Timestamp dateMPolicy, String trxName)
 	{
 		String sqlWhere = "M_Locator_ID=? AND M_Product_ID=? AND ";
+		
 		if (M_AttributeSetInstance_ID == 0)
-			sqlWhere += "(M_AttributeSetInstance_ID=? OR M_AttributeSetInstance_ID IS NULL)";
+			if (provideOrderInfo.isMatchRequirementASI() != null && provideOrderInfo.isMatchRequirementASI()){
+				sqlWhere += "(M_AttributeSetInstance_ID IS NULL)";
+			}else{
+				sqlWhere += "(M_AttributeSetInstance_ID=? OR M_AttributeSetInstance_ID IS NULL)";
+			}
 		else
 			sqlWhere += "M_AttributeSetInstance_ID=?";
 	
@@ -95,71 +86,38 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		if (dateMPolicy != null)
 			sqlWhere += " AND DateMaterialPolicy=trunc(cast(? as date))";
 		
-		sqlWhere = ModelUtil.appendOrderClause(null, sqlWhere, orderLineID, true);
+		sqlWhere = ModelUtil.appendOrderClause(null, sqlWhere, provideOrderInfo, true);
 		
 		Query query = new Query(ctx, MStorageOnHand.Table_Name, sqlWhere, trxName);
+		
+		List<Object> listParameter = new ArrayList<Object>();
+		listParameter.add(M_Locator_ID);
+		listParameter.add(M_Product_ID);
+		
+		if (M_AttributeSetInstance_ID == 0 && provideOrderInfo.isMatchRequirementASI() != null && provideOrderInfo.isMatchRequirementASI()){
+			;
+		}else{
+			listParameter.add(M_AttributeSetInstance_ID);
+		}
+		
 		if (dateMPolicy != null)
-			query.setParameters(M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, orderLineID);
-		else
-			query.setParameters(M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID);									 
+			listParameter.add(dateMPolicy);
+		
+		listParameter.add(provideOrderInfo.getOrderLineRefID());
+		query.setParameters(listParameter);
 		MStorageOnHand retValue = query.first();
 		
 		if (retValue == null) {
 			if (s_log.isLoggable(Level.FINE)) s_log.fine("Not Found - M_Locator_ID=" + M_Locator_ID 
 					+ ", M_Product_ID=" + M_Product_ID + ", M_AttributeSetInstance_ID=" + M_AttributeSetInstance_ID 
-					+ ", " + I_M_StorageOnHand.COLUMNNAME_C_OrderLine_ID + " = " + orderLineID);
+					+ ", " + I_M_StorageOnHand.COLUMNNAME_C_OrderLine_ID + " = " + provideOrderInfo.getOrderLineRefID());
 		} else {
 			if (s_log.isLoggable(Level.FINE)) s_log.fine("M_Locator_ID=" + M_Locator_ID 
 					+ ", M_Product_ID=" + M_Product_ID + ", M_AttributeSetInstance_ID=" + M_AttributeSetInstance_ID
-					+ ", " + I_M_StorageOnHand.COLUMNNAME_C_OrderLine_ID + " = " + orderLineID);
+					+ ", " + I_M_StorageOnHand.COLUMNNAME_C_OrderLine_ID + " = " + provideOrderInfo.getOrderLineRefID());
 		}
 		return retValue;
 	}	//	get
-
-	/**
-	 * 	Get all Storages for Product with ASI and QtyOnHand <> 0
-	 *	@param ctx context
-	 *	@param M_Product_ID product
-	 *	@param M_Locator_ID locator
-	 *	@param FiFo first in-first-out
-	 *	@param trxName transaction
-	 *	@return existing or null
-	 */
-	public static MStorageOnHand[] getAllWithASI (Properties ctx, int M_Product_ID, int M_Locator_ID, 
-		boolean FiFo, String trxName)
-	{
-		ArrayList<MStorageOnHand> list = new ArrayList<MStorageOnHand>();
-		String sql = "SELECT * FROM M_StorageOnHand "
-			+ "WHERE M_Product_ID=? AND M_Locator_ID=?"
-			+ " AND M_AttributeSetInstance_ID > 0 "
-			+ " AND QtyOnHand <> 0 "			
-			+ "ORDER BY M_AttributeSetInstance_ID";
-		if (!FiFo)
-			sql += " DESC";
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement (sql, trxName);
-			pstmt.setInt (1, M_Product_ID);
-			pstmt.setInt (2, M_Locator_ID);
-			rs = pstmt.executeQuery ();
-			while (rs.next ())
-				list.add(new MStorageOnHand (ctx, rs, trxName));
-		}
-		catch (SQLException ex)
-		{
-			s_log.log(Level.SEVERE, sql, ex);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null; pstmt = null;
-		}
-		MStorageOnHand[] retValue = new MStorageOnHand[list.size()];
-		list.toArray(retValue);
-		return retValue;
-	}	//	getAllWithASI
 
 	/**
 	 * 	Get all Storages for Product where QtyOnHand <> 0
@@ -169,10 +127,10 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param trxName transaction
 	 *	@return existing or null
 	 */
-	public static MStorageOnHand[] getAll (Properties ctx, 
+	public static MStorageOnHand[] getAll (ITrackingProduct provideOrderInfo, Properties ctx, 
 		int M_Product_ID, int M_Locator_ID, String trxName)
 	{
-		return getAll(ctx, M_Product_ID, M_Locator_ID, trxName, false, 0);
+		return getAll(provideOrderInfo, ctx, M_Product_ID, M_Locator_ID, trxName, false, 0);
 	}
 	
 	/**
@@ -183,12 +141,19 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param trxName transaction
 	 *	@return existing or null
 	 */
-	public static MStorageOnHand[] getAll (Properties ctx, 
+	public static MStorageOnHand[] getAll (ITrackingProduct provideOrderInfo, Properties ctx, 
 		int M_Product_ID, int M_Locator_ID, String trxName, boolean forUpdate, int timeout)
 	{
 		String sqlWhere = "M_Product_ID=? AND M_Locator_ID=? AND QtyOnHand <> 0";
+		List<Object> lsParameter = new ArrayList<Object>();
+		lsParameter.add(M_Product_ID);
+		lsParameter.add(M_Locator_ID);
+		if (provideOrderInfo.isMatchRequirementASI() != null && provideOrderInfo.isMatchRequirementASI()){
+			sqlWhere += " AND COALESCE (M_AttributeSetInstance_ID, 0) = ? ";
+			lsParameter.add(provideOrderInfo.getAsiID());
+		}
 		Query query = new Query(ctx, MStorageOnHand.Table_Name, sqlWhere, trxName)
-								.setParameters(M_Product_ID, M_Locator_ID);
+								.setParameters(lsParameter);
 		MProduct product = new MProduct(ctx, M_Product_ID, trxName);
 		if (product.isUseGuaranteeDateForMPolicy()) 
 		{
@@ -237,30 +202,6 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	}	//	getOfProduct
 	
 	/**
-	 * 	Get Storage Info for Warehouse
-	 *	@param ctx context
-	 *	@param M_Warehouse_ID 
-	 *	@param M_Product_ID product
-	 *	@param M_AttributeSetInstance_ID instance
-	 *	@param M_AttributeSet_ID attribute set (NOT USED)
-	 *	@param allAttributeInstances if true, all attribute set instances (NOT USED)
-	 *	@param minGuaranteeDate optional minimum guarantee date if all attribute instances
-	 *	@param FiFo first in-first-out
-	 *	@param trxName transaction
-	 *	@return existing - ordered by location priority (desc) and/or guarantee date
-	 *
-	 *  @deprecated
-	 */
-	public static MStorageOnHand[] getWarehouse (Properties ctx, int M_Warehouse_ID, 
-		int M_Product_ID, int M_AttributeSetInstance_ID, int M_AttributeSet_ID,
-		boolean allAttributeInstances, Timestamp minGuaranteeDate,
-		boolean FiFo, String trxName)
-	{
-		return getWarehouse(ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, 
-				minGuaranteeDate, FiFo, false, 0, trxName);
-	}
-	
-	/**
 	 * 	Get Storage Info for Warehouse or locator
 	 *	@param ctx context
 	 *	@param M_Warehouse_ID ignore if M_Locator_ID > 0
@@ -273,11 +214,11 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param trxName transaction
 	 *	@return existing - ordered by location priority (desc) and/or guarantee date
 	 */
-	public static MStorageOnHand[] getWarehouse (Properties ctx, int M_Warehouse_ID, 
+	public static MStorageOnHand[] getWarehouse (ITrackingProduct provideOrderInfo, Properties ctx, int M_Warehouse_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID, Timestamp minGuaranteeDate,
 		boolean FiFo, boolean positiveOnly, int M_Locator_ID, String trxName)
 	{
-		return getWarehouse(ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, 
+		return getWarehouse(provideOrderInfo, ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, 
 				positiveOnly, M_Locator_ID, trxName, false);
 	}
 	
@@ -295,11 +236,11 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *  @param forUpdate
 	 *	@return existing - ordered by location priority (desc) and/or guarantee date
 	 */
-	public static MStorageOnHand[] getWarehouse (Properties ctx, int M_Warehouse_ID, 
+	public static MStorageOnHand[] getWarehouse (ITrackingProduct provideOrderInfo, Properties ctx, int M_Warehouse_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID, Timestamp minGuaranteeDate,
 		boolean FiFo, boolean positiveOnly, int M_Locator_ID, String trxName, boolean forUpdate)
 	{
-		return getWarehouse(ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, positiveOnly, M_Locator_ID, trxName, forUpdate, 0);
+		return getWarehouse(provideOrderInfo, ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, positiveOnly, M_Locator_ID, trxName, forUpdate, 0);
 	}
 	
 	/**
@@ -316,7 +257,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *  @param forUpdate
 	 *	@return existing - ordered by location priority (desc) and/or guarantee date
 	 */
-	public static MStorageOnHand[] getWarehouse (Properties ctx, int M_Warehouse_ID, 
+	public static MStorageOnHand[] getWarehouse (ITrackingProduct provideOrderInfo, Properties ctx, int M_Warehouse_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID, Timestamp minGuaranteeDate,
 		boolean FiFo, boolean positiveOnly, int M_Locator_ID, String trxName, boolean forUpdate, int timeout)
 	{
@@ -326,6 +267,10 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		boolean allAttributeInstances = false;
 		if (M_AttributeSetInstance_ID == 0)
 			allAttributeInstances = true;		
+		
+		if (provideOrderInfo.isMatchRequirementASI() != null && provideOrderInfo.isMatchRequirementASI()){
+			allAttributeInstances = false;
+		}
 		
 		ArrayList<MStorageOnHand> list = new ArrayList<MStorageOnHand>();
 		//	Specific Attribute Set Instance
@@ -348,6 +293,9 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		{
 			sql += " AND s.QtyOnHand <> 0 ";
 		}
+		
+		sql = ModelUtil.appendOrderClause("s", sql, provideOrderInfo, true);
+		
 		sql += "ORDER BY l.PriorityNo DESC, DateMaterialPolicy ";
 		if (!FiFo)
 			sql += " DESC";
@@ -381,6 +329,8 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			
 			MProduct product = MProduct.get(Env.getCtx(), M_Product_ID);
 			
+			sql = ModelUtil.appendOrderClause("s", sql, provideOrderInfo, true);
+			
 			if(product.isUseGuaranteeDateForMPolicy()){
 				sql += "ORDER BY l.PriorityNo DESC, COALESCE(asi.GuaranteeDate,s.DateMaterialPolicy)";
 				if (!FiFo)
@@ -400,16 +350,18 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		try
 		{
 			pstmt = DB.prepareStatement(sql, trxName);
-			pstmt.setInt(1, M_Locator_ID > 0 ? M_Locator_ID : M_Warehouse_ID);
-			pstmt.setInt(2, M_Product_ID);
+			int indexPara = 1;
+			pstmt.setInt(indexPara++, M_Locator_ID > 0 ? M_Locator_ID : M_Warehouse_ID);
+			pstmt.setInt(indexPara++, M_Product_ID);
 			if (!allAttributeInstances)
 			{
-				pstmt.setInt(3, M_AttributeSetInstance_ID);
+				pstmt.setInt(indexPara++, M_AttributeSetInstance_ID);
 			}
 			else if (minGuaranteeDate != null)
 			{
-				pstmt.setTimestamp(3, minGuaranteeDate);
+				pstmt.setTimestamp(indexPara++, minGuaranteeDate);
 			}
+			pstmt.setInt(indexPara++, provideOrderInfo.getOrderLineRefID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{	
@@ -438,24 +390,6 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		return retValue;
 	}	//	getWarehouse
 
-	/**
-	 * 	Get Storage Info for Warehouse or locator
-	 *	@param ctx context
-	 *	@param M_Warehouse_ID ignore if M_Locator_ID > 0
-	 *	@param M_Product_ID product
-	 *	@param M_AttributeSetInstance_ID instance id, 0 to retrieve all instance
-	 *	@param minGuaranteeDate optional minimum guarantee date if all attribute instances
-	 *	@param FiFo first in-first-out
-	 *  @param M_Locator_ID optional locator id
-	 *	@param trxName transaction
-	 *	@return existing - ordered by location priority (desc) and/or guarantee date
-	 */
-	public static MStorageOnHand[] getWarehouseNegative (int orderLineID, Properties ctx, int M_Warehouse_ID, 
-		int M_Product_ID, int M_AttributeSetInstance_ID, Timestamp minGuaranteeDate,
-		boolean FiFo, int M_Locator_ID, String trxName)
-	{
-		return getWarehouseNegative(orderLineID, ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, M_Locator_ID, trxName, false);
-	}
 	
 	/**
 	 * 	Get Storage Info for Warehouse or locator
@@ -470,11 +404,11 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *  @param forUpdate
 	 *	@return existing - ordered by location priority (desc) and/or guarantee date
 	 */
-	public static MStorageOnHand[] getWarehouseNegative (int orderLineID, Properties ctx, int M_Warehouse_ID, 
+	public static MStorageOnHand[] getWarehouseNegative (ITrackingProduct provideOrderInfo, Properties ctx, int M_Warehouse_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID, Timestamp minGuaranteeDate,
 		boolean FiFo, int M_Locator_ID, String trxName, boolean forUpdate)
 	{
-		return getWarehouseNegative(orderLineID, ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, M_Locator_ID, trxName, forUpdate, 0);
+		return getWarehouseNegative(provideOrderInfo, ctx, M_Warehouse_ID, M_Product_ID, M_AttributeSetInstance_ID, minGuaranteeDate, FiFo, M_Locator_ID, trxName, forUpdate, 0);
 	}
 	
 	/**
@@ -491,7 +425,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *  @param timeout
 	 *	@return existing - ordered by location priority (desc) and/or guarantee date
 	 */
-	public static MStorageOnHand[] getWarehouseNegative (int orderLineID, Properties ctx, int M_Warehouse_ID, 
+	public static MStorageOnHand[] getWarehouseNegative (ITrackingProduct provideOrderInfo, Properties ctx, int M_Warehouse_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID, Timestamp minGuaranteeDate,
 		boolean FiFo, int M_Locator_ID, String trxName, boolean forUpdate, int timeout)
 	{
@@ -501,6 +435,10 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		boolean allAttributeInstances = false;
 		if (M_AttributeSetInstance_ID == 0)
 			allAttributeInstances = true;		
+		
+		if (provideOrderInfo.isMatchRequirementASI() != null && provideOrderInfo.isMatchRequirementASI()){
+			allAttributeInstances = false;
+		}
 		
 		ArrayList<MStorageOnHand> list = new ArrayList<MStorageOnHand>();
 		//	Specific Attribute Set Instance
@@ -517,7 +455,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			+ " AND COALESCE(s.M_AttributeSetInstance_ID,0)=? "
 			+ " AND s.QtyOnHand < 0 ";
 		
-		sql = ModelUtil.appendOrderClause("s", sql, orderLineID, true);
+		sql = ModelUtil.appendOrderClause("s", sql, provideOrderInfo, true);
 		
 		sql += "ORDER BY l.PriorityNo DESC, DateMaterialPolicy ";
 		if (!FiFo)
@@ -543,7 +481,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 				sql += "AND (asi.GuaranteeDate IS NULL OR asi.GuaranteeDate>?) ";
 			}
 			
-			sql = ModelUtil.appendOrderClause("s", sql, orderLineID, true);
+			sql = ModelUtil.appendOrderClause("s", sql, provideOrderInfo, true);
 			
 			MProduct product = MProduct.get(Env.getCtx(), M_Product_ID);
 			
@@ -578,7 +516,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 			{
 				pstmt.setTimestamp(paraIndex++, minGuaranteeDate);
 			}
-			pstmt.setInt(paraIndex++, orderLineID);
+			pstmt.setInt(paraIndex++, provideOrderInfo.getOrderLineRefID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{	
@@ -616,10 +554,10 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param trxName transaction
 	 *	@return existing/new or null
 	 */
-	public static MStorageOnHand getCreate (int orderID, int orderLineID, Properties ctx, int M_Locator_ID, 
+	public static MStorageOnHand getCreate (ITrackingProduct provideOrderInfo, Properties ctx, int M_Locator_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID,Timestamp dateMPolicy, String trxName)
 	{
-		return getCreate(orderID, orderLineID, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, trxName, false);
+		return getCreate(provideOrderInfo, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, trxName, false);
 	}
 	
 	/**
@@ -632,10 +570,10 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *  @param forUpdate
 	 *	@return existing/new or null
 	 */
-	public static MStorageOnHand getCreate (int orderID, int orderLineID, Properties ctx, int M_Locator_ID, 
+	public static MStorageOnHand getCreate (ITrackingProduct provideOrderInfo, Properties ctx, int M_Locator_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID,Timestamp dateMPolicy, String trxName, boolean forUpdate)
 	{
-		return getCreate(orderID, orderLineID, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, trxName, forUpdate, 0);
+		return getCreate(provideOrderInfo, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, trxName, forUpdate, 0);
 	}
 	
 	/**
@@ -649,7 +587,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *  @param timeout
 	 *	@return existing/new or null
 	 */
-	public static MStorageOnHand getCreate (int orderID, int orderLineID, Properties ctx, int M_Locator_ID, 
+	public static MStorageOnHand getCreate (ITrackingProduct provideOrderInfo, Properties ctx, int M_Locator_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID,Timestamp dateMPolicy, String trxName, boolean forUpdate, int timeout)
 	{
 		if (M_Locator_ID == 0)
@@ -661,7 +599,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		
 		dateMPolicy = Util.removeTime(dateMPolicy);
 		
-		MStorageOnHand retValue = get(orderLineID, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID,dateMPolicy, trxName);
+		MStorageOnHand retValue = get(provideOrderInfo, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID,dateMPolicy, trxName);
 		if (retValue != null)
 		{
 			if (forUpdate)
@@ -674,7 +612,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		if (locator.get_ID() != M_Locator_ID)
 			throw new IllegalArgumentException("Not found M_Locator_ID=" + M_Locator_ID);
 		//
-		retValue = new MStorageOnHand (orderID, orderLineID, locator, M_Product_ID, M_AttributeSetInstance_ID,dateMPolicy);
+		retValue = new MStorageOnHand (provideOrderInfo, locator, M_Product_ID, M_AttributeSetInstance_ID,dateMPolicy);
 		retValue.saveEx(trxName);
 		if (s_log.isLoggable(Level.FINE)) s_log.fine("New " + retValue);
 		return retValue;
@@ -690,32 +628,11 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param M_AttributeSetInstance_ID AS Instance
 	 *	@param reservationAttributeSetInstance_ID reservation AS Instance
 	 *	@param diffQtyOnHand add on hand
-	 *	@param trxName transaction
-	 *  @deprecated
-	 *	@return true if updated
-	 */
-	public static boolean add (int orderID, int orderLineID, Properties ctx, int M_Warehouse_ID, int M_Locator_ID, 
-		int M_Product_ID, int M_AttributeSetInstance_ID,
-		BigDecimal diffQtyOnHand, String trxName)
-	{
-		return add(orderID, orderLineID, ctx, M_Warehouse_ID, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, diffQtyOnHand, null, trxName);
-	}
-	
-	/**
-	 * 	Update Storage Info add.
-	 * 	Called from MProjectIssue
-	 *	@param ctx context
-	 *	@param M_Warehouse_ID warehouse
-	 *	@param M_Locator_ID locator
-	 *	@param M_Product_ID product
-	 *	@param M_AttributeSetInstance_ID AS Instance
-	 *	@param reservationAttributeSetInstance_ID reservation AS Instance
-	 *	@param diffQtyOnHand add on hand
 	 *  @param dateMPolicy
 	 *	@param trxName transaction
 	 *	@return true if updated
 	 */
-	public static boolean add (int orderID, int orderLineID, Properties ctx, int M_Warehouse_ID, int M_Locator_ID, 
+	public static boolean add (ITrackingProduct provideOrderInfo, Properties ctx, int M_Warehouse_ID, int M_Locator_ID, 
 		int M_Product_ID, int M_AttributeSetInstance_ID,
 		BigDecimal diffQtyOnHand,Timestamp dateMPolicy, String trxName)
 	{
@@ -738,20 +655,20 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		dateMPolicy = Util.removeTime(dateMPolicy);
 		
 		//	Get Storage
-		MStorageOnHand storage = getCreate (orderID, orderLineID, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, trxName, true, 120);
+		MStorageOnHand storage = getCreate (provideOrderInfo, ctx, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, dateMPolicy, trxName, true, 120);
 		//	Verify
 		if (storage.getM_Locator_ID() != M_Locator_ID 
 			&& storage.getM_Product_ID() != M_Product_ID
 			&& storage.getM_AttributeSetInstance_ID() != M_AttributeSetInstance_ID
-			&& storage.getC_OrderLine_ID() != orderLineID
-			&& storage.getC_Order_ID() != orderID)
+			&& storage.getC_OrderLine_ID() != provideOrderInfo.getOrderLineRefID()
+			&& storage.getC_Order_ID() != provideOrderInfo.getOrderRefID())
 		{
 			s_log.severe ("No Storage found - M_Locator_ID=" + M_Locator_ID 
 				+ ",M_Product_ID=" + M_Product_ID + ",ASI=" + M_AttributeSetInstance_ID);
 			return false;
 		}
 
-		storage.addQtyOnHand(diffQtyOnHand);
+		storage.addQtyOnHand(provideOrderInfo, diffQtyOnHand);
 		if (storage.getQtyOnHand().signum() == -1) {
 			if (MWarehouse.get(Env.getCtx(), M_Warehouse_ID).isDisallowNegativeInv()) {
 				throw new AdempiereException(Msg.getMsg(ctx, "NegativeInventoryDisallowed"));
@@ -768,11 +685,20 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 * Add quantity on hand directly - not using cached value - solving IDEMPIERE-2629
 	 * @param addition
 	 */
-	public void addQtyOnHand(BigDecimal addition) {
+	public void addQtyOnHand(ITrackingProduct provideOrderInfo, BigDecimal addition) {
+		if (provideOrderInfo.isMatchRequirementASI() && provideOrderInfo.isMatchRequirementASI()){
+			if (getM_AttributeSetInstance_ID() != provideOrderInfo.getAsiID()){
+				throw new AdempiereException("ASI isn't match");
+			}
+			
+			if (provideOrderInfo.getOrderRef() != null && provideOrderInfo.getOrderRef().isTrackingInfo() && getC_OrderLine_ID() != provideOrderInfo.getOrderLineRefID()){
+				throw new AdempiereException("OrderLineID to tracking isn't match");
+			}
+		}
 		final String sql = "UPDATE M_StorageOnHand SET QtyOnHand=QtyOnHand+?, Updated=SYSDATE, UpdatedBy=? " +
-				"WHERE M_Product_ID=? AND M_Locator_ID=? AND M_AttributeSetInstance_ID=? AND DateMaterialPolicy=?";
+				"WHERE M_Product_ID=? AND M_Locator_ID=? AND M_AttributeSetInstance_ID=? AND DateMaterialPolicy=? AND COALESCE(C_OrderLine_ID, 0) = ? ";
 		DB.executeUpdateEx(sql, 
-			new Object[] {addition, Env.getAD_User_ID(Env.getCtx()), getM_Product_ID(), getM_Locator_ID(), getM_AttributeSetInstance_ID(), getDateMaterialPolicy()}, 
+			new Object[] {addition, Env.getAD_User_ID(Env.getCtx()), getM_Product_ID(), getM_Locator_ID(), getM_AttributeSetInstance_ID(), getDateMaterialPolicy(), getC_OrderLine_ID()}, 
 			get_TrxName());
 		load(get_TrxName());
 	}
@@ -871,7 +797,7 @@ public class MStorageOnHand extends X_M_StorageOnHand
 	 *	@param M_Product_ID product
 	 *	@param M_AttributeSetInstance_ID attribute
 	 */
-	private MStorageOnHand (int orderID, int orderLineID, MLocator locator, int M_Product_ID, int M_AttributeSetInstance_ID,Timestamp dateMPolicy)
+	private MStorageOnHand (ITrackingProduct provideOrderInfo, MLocator locator, int M_Product_ID, int M_AttributeSetInstance_ID,Timestamp dateMPolicy)
 	{
 		this (locator.getCtx(), 0, locator.get_TrxName());
 		setClientOrg(locator);
@@ -880,7 +806,10 @@ public class MStorageOnHand extends X_M_StorageOnHand
 		setM_AttributeSetInstance_ID (M_AttributeSetInstance_ID);
 		dateMPolicy = Util.removeTime(dateMPolicy);
 		setDateMaterialPolicy(dateMPolicy);
-		ModelUtil.setOrderLinkForStorageOnhand(orderID, orderLineID, this);
+		ModelUtil.setOrderLinkForStorageOnhand(provideOrderInfo, this);
+		if (provideOrderInfo.isMatchRequirementASI() != null && provideOrderInfo.isMatchRequirementASI()){
+			setM_AttributeSetInstance_ID(provideOrderInfo.getAsiID());
+		}
 	}	//	MStorageOnHand
 
 	/** Log								*/

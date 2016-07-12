@@ -22,6 +22,7 @@ import org.compiere.model.MWarehouse;
 import org.compiere.util.Env;
 
 import test.AdempiereTestCase;
+import vn.hsv.idempiere.base.util.NullProviderOrderInfo;
 
 /**
  * Test MStorage class
@@ -45,7 +46,7 @@ public class MStorageTest extends AdempiereTestCase
 		loc.saveEx();
 		//
 		BigDecimal targetQty = BigDecimal.valueOf(qtyOnHand).setScale(12, BigDecimal.ROUND_HALF_UP);
-		MStorageOnHand s1 = MStorageOnHand.getCreate(0, 0, getCtx(), loc.get_ID(), product_id, 0,null, getTrxName());
+		MStorageOnHand s1 = MStorageOnHand.getCreate(new NullProviderOrderInfo(), getCtx(), loc.get_ID(), product_id, 0,null, getTrxName());
 		s1.setQtyOnHand(targetQty);
 		s1.saveEx();
 		//

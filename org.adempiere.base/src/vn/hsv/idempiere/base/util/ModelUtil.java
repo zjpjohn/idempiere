@@ -14,8 +14,12 @@
 
 package vn.hsv.idempiere.base.util;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_OrderLine;
+import org.compiere.model.I_M_InOut;
+import org.compiere.model.I_M_InOutLine;
+import org.compiere.model.I_M_Product;
 import org.compiere.model.I_M_StorageOnHand;
 import org.compiere.model.MStorageOnHand;
 import org.compiere.model.MStorageReservation;
@@ -26,10 +30,28 @@ import org.compiere.model.MTransaction;
  *
  */
 public class ModelUtil {
+	public static boolean isShipmmentLine (IOrderLineLink provideOrderInfo){
+		if (provideOrderInfo instanceof I_M_InOutLine){
+			I_M_InOutLine shipmentLine = (I_M_InOutLine)provideOrderInfo;
+			I_M_InOut shipment = shipmentLine.getM_InOut();
+			return shipment.isSOTrx();
+		}
+		return false;
+	}
+	
 	public static void setOrderLinkForTransaction (IOrderLineLink provideOrderInfo, MTransaction transaction){
-		if (provideOrderInfo.getOrderLineRef() != null){
-			transaction.setC_OrderLine_ID(provideOrderInfo.getOrderLineRefID());
-			transaction.setC_Order_ID(provideOrderInfo.getOrderRefID());
+		I_C_OrderLine olRef = provideOrderInfo.getOrderLineRef();
+		if (olRef != null && olRef.getC_OrderLine_ID() != 0){
+			if (isShipmmentLine(provideOrderInfo) && !provideOrderInfo.getOrderRef().isTrackingInfo()){
+				return;// don't set transaction for shipment in case order mark is not tracking
+			}
+			
+			if (provideOrderInfo.getOrderRef().isTrackingInfo()){
+				transaction.setC_OrderLine_ID(provideOrderInfo.getOrderLineRefID());
+				transaction.setC_Order_ID(provideOrderInfo.getOrderRefID());
+			}else{
+				throw new AdempiereException("By wrong way, you set tracking follow order line for order line without isTrackingInfo");
+			}
 		}
 	}
 	
@@ -49,17 +71,43 @@ public class ModelUtil {
 		return providerOrder.getOrderRef().getC_Order_ID();
 	}
 	
-	public static void setOrderLinkForStorageOnhand (IOrderLineLink provideOrderInfo, MStorageOnHand storage){
-		if (provideOrderInfo.getOrderLineRef() != null){
-			setOrderLinkForStorageOnhand (provideOrderInfo.getOrderRefID(), 
-					provideOrderInfo.getOrderLineRefID(),
-					storage);
-		}
+	public static int implementGetOrderRefIDFromParent (IOrderLineLink parent){
+		return parent.getOrderRefID();
 	}
 	
-	public static void setOrderLinkForStorageOnhand (int orderID, int orderLineID, MStorageOnHand storage){
-		storage.setC_OrderLine_ID(orderLineID);
-		storage.setC_Order_ID(orderID);
+	public static I_C_Order implementGetOrderRefFromParent (IOrderLineLink parent){
+		return parent.getOrderRef();
+	}
+	
+	public static int implementGetOrderLineRefIDFromParent (IOrderLineLink parent){
+		return parent.getOrderLineRefID();
+	}
+	
+	public static I_C_OrderLine implementGetOrderLineRefFromParent (IOrderLineLink parent){
+		return parent.getOrderLineRef();
+	}
+	
+	public static Boolean implementCheckMatchRequirement (I_M_Product product){
+		if (product == null)
+			return null;
+		return new Boolean(product.isMatchRequirement());
+	}
+	
+	public static void setOrderLinkForStorageOnhand (IOrderLineLink provideOrderInfo, MStorageOnHand storage){
+		I_C_OrderLine olRef = provideOrderInfo.getOrderLineRef();
+		if (olRef != null && olRef.getC_OrderLine_ID() != 0){
+			if (isShipmmentLine(provideOrderInfo) && !provideOrderInfo.getOrderRef().isTrackingInfo()){
+				return;// don't set transaction for shipment in case order mark is not tracking
+			}
+			
+			if (provideOrderInfo.getOrderRef().isTrackingInfo()){
+				storage.setC_OrderLine_ID(provideOrderInfo.getOrderLineRefID());
+				storage.setC_Order_ID(provideOrderInfo.getOrderRefID());
+			}else{
+				throw new AdempiereException("By wrong way, you set tracking follow order line for order line without isTrackingInfo");
+			}
+		}
+		
 	}
 	
 	public static void setOrderLinkForStorageReservation (IOrderLineLink provideOrderInfo, MStorageReservation storage){
@@ -69,7 +117,7 @@ public class ModelUtil {
 		}
 	}
 	
-	public static String appendOrderClause (String tableAlias, String sqlWhere, int orderLineID, boolean appendAnd){
+	public static String appendOrderClause (String tableAlias, String sqlWhere, ITrackingProduct provideOrderInfo, boolean appendAnd){
 		String clName = I_M_StorageOnHand.COLUMNNAME_C_OrderLine_ID;
 		if (tableAlias != null && tableAlias.trim().length() > 0)
 			clName = tableAlias + "." + clName;
@@ -77,11 +125,12 @@ public class ModelUtil {
 		if (appendAnd)
 			sqlWhere = sqlWhere + " AND ";
 		
-		if (orderLineID == 0)
-			sqlWhere += "(" + clName + "=? OR " + clName + " IS NULL)";
+		if (provideOrderInfo.getOrderLineRefID() == 0)
+			sqlWhere += "COALESCE (C_OrderLine_ID, 0) = ?";
 		else
 			sqlWhere += clName + "=?";
 		
 		return sqlWhere;
 	}
+	
 }

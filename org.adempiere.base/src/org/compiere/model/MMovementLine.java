@@ -27,7 +27,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.eevolution.model.MDDOrderLine;
 
-import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ITrackingProduct;
 import vn.hsv.idempiere.base.util.ModelUtil;
 
 /**
@@ -36,7 +36,7 @@ import vn.hsv.idempiere.base.util.ModelUtil;
  *  @author Jorg Janke
  *  @version $Id: MMovementLine.java,v 1.3 2006/07/30 00:51:03 jjanke Exp $
  */
-public class MMovementLine extends X_M_MovementLine implements IOrderLineLink
+public class MMovementLine extends X_M_MovementLine implements ITrackingProduct
 {
 	/**
 	 * 
@@ -401,5 +401,20 @@ public class MMovementLine extends X_M_MovementLine implements IOrderLineLink
 	@Override
 	public int getOrderLineRefID() {
 		return getC_OrderLine_ID();
-	}	
+	}
+	
+	@Override
+	public int getAsiID() {
+		return getM_AttributeSetInstance_ID();
+	}
+
+	@Override
+	public I_M_AttributeSetInstance getAsi() {
+		return getM_AttributeSetInstance();
+	}
+
+	@Override
+	public Boolean isMatchRequirementASI() {
+		return ModelUtil.implementCheckMatchRequirement (getM_Product());
+	}
 }	//	MMovementLine

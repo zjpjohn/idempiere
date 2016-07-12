@@ -33,7 +33,7 @@ public class X_M_Product extends PO implements I_M_Product, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20151030L;
+	private static final long serialVersionUID = 20160105L;
 
     /** Standard Constructor */
     public X_M_Product (Properties ctx, int M_Product_ID, String trxName)
@@ -849,6 +849,30 @@ public class X_M_Product extends PO implements I_M_Product, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set Match Requirement.
+		@param MatchRequirement 
+		Matching Requirement for Invoice
+	  */
+	public void setMatchRequirement (boolean MatchRequirement)
+	{
+		set_Value (COLUMNNAME_MatchRequirement, Boolean.valueOf(MatchRequirement));
+	}
+
+	/** Get Match Requirement.
+		@return Matching Requirement for Invoice
+	  */
+	public boolean isMatchRequirement () 
+	{
+		Object oo = get_Value(COLUMNNAME_MatchRequirement);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
 	}
 
 	public org.compiere.model.I_M_AttributeSet getM_AttributeSet() throws RuntimeException
