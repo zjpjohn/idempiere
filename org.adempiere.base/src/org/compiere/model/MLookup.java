@@ -23,9 +23,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 
+import org.adempiere.util.Callback;
 import org.adempiere.util.ContextRunnable;
 import org.compiere.Adempiere;
 import org.compiere.util.CLogMgt;
@@ -60,6 +62,13 @@ public final class MLookup extends Lookup implements Serializable
 	 */
 	private static final long serialVersionUID = 2228200000988048623L;
 
+	Callback<Map<Object,Object>> completeLoad;
+	
+	public MLookup (MLookupInfo info, int TabNo, Callback<Map<Object,Object>> completeLoad){
+		this(info, TabNo);
+		this.completeLoad = completeLoad;
+	}
+	
 	/**
 	 *  MLookup Constructor
 	 *  @param info info
@@ -288,7 +297,7 @@ public final class MLookup extends Lookup implements Serializable
 
 	public boolean isContainForSeachEditor (Object key){
 		if (m_loader == null)
-			m_loader = new MLoader();
+			m_loader = new MLoader(completeLoad);
 		
 		return m_loader.getByKey(key) != null;
 	}
@@ -704,7 +713,7 @@ public final class MLookup extends Lookup implements Serializable
 			return 0;
 		if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": start");
 		
-		m_loader = new MLoader();
+		m_loader = new MLoader(completeLoad);
 		m_loaderFuture = Adempiere.getThreadPoolExecutor().submit(m_loader);
 		loadComplete();
 		if (log.isLoggable(Level.FINE)) log.fine(m_info.KeyColumn + ": #" + m_lookup.size());
@@ -752,12 +761,14 @@ public final class MLookup extends Lookup implements Serializable
 		 */
 		private static final long serialVersionUID = -7868426685745727939L;
 
+		private Callback<Map<Object,Object>> completeLoad;
 		/**
 		 * 	MLoader Constructor
 		 */
-		public MLoader()
+		public MLoader(Callback<Map<Object,Object>> completeLoad)
 		{
 			super();
+			this.completeLoad = completeLoad;
 		}	//	Loader
 		
 		private long m_startTime = System.currentTimeMillis();
@@ -859,6 +870,8 @@ public final class MLookup extends Lookup implements Serializable
 			finally {
 				DB.close(rs, pstmt);
 			}
+			if (completeLoad != null)
+				completeLoad.onCallback(m_lookup);
 			int size = m_lookup.size();
 			if (log.isLoggable(Level.FINER)) log.finer(m_info.KeyColumn
 					+ " (" + m_info.Column_ID + "):"
