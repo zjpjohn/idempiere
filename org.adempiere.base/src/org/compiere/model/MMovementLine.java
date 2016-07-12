@@ -27,13 +27,16 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.eevolution.model.MDDOrderLine;
 
+import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ModelUtil;
+
 /**
  *	Inventory Move Line Model
  *	
  *  @author Jorg Janke
  *  @version $Id: MMovementLine.java,v 1.3 2006/07/30 00:51:03 jjanke Exp $
  */
-public class MMovementLine extends X_M_MovementLine
+public class MMovementLine extends X_M_MovementLine implements IOrderLineLink
 {
 	/**
 	 * 
@@ -366,5 +369,37 @@ public class MMovementLine extends X_M_MovementLine
 			+ ", M_LocatorTo_ID=" + getM_LocatorTo_ID()
 			+ "]"
 		;
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getC_Order()
+	 */
+	@Override
+	public I_C_Order getOrderRef() {
+		return ModelUtil.implementGetOrderRef(this);
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getC_Order_ID()
+	 */
+	@Override
+	public int getOrderRefID() {
+		return ModelUtil.implementGetOrderRefID(this);
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getOrderLine()
+	 */
+	@Override
+	public I_C_OrderLine getOrderLineRef() {
+		return getC_OrderLine();
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getOrderLineRefID()
+	 */
+	@Override
+	public int getOrderLineRefID() {
+		return getC_OrderLine_ID();
 	}	
 }	//	MMovementLine

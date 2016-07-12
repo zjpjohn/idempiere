@@ -11,6 +11,9 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
+import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ModelUtil;
+
 
 public class MProductionLine extends X_M_ProductionLine {
 	/**
@@ -113,12 +116,17 @@ public class MProductionLine extends X_M_ProductionLine {
 					"P+", 
 					getM_Locator_ID(), getM_Product_ID(), asi.get_ID(), 
 					getMovementQty(), date, get_TrxName());
+			
+			IOrderLineLink orderInfoProvide = (MProduction)this.getM_Production();
+			
+			ModelUtil.setOrderLinkForTransaction(orderInfoProvide, matTrx);
+			
 			matTrx.setM_ProductionLine_ID(get_ID());
 			if ( !matTrx.save(get_TrxName()) ) {
 				log.log(Level.SEVERE, "Could not save transaction for " + toString());
 				errorString.append("Could not save transaction for " + toString() + "\n");
 			}
-			MStorageOnHand storage = MStorageOnHand.getCreate(getCtx(), getM_Locator_ID(),
+			MStorageOnHand storage = MStorageOnHand.getCreate(orderInfoProvide.getOrderRefID(), orderInfoProvide.getOrderLineRefID(), getCtx(), getM_Locator_ID(),
 					getM_Product_ID(), asi.get_ID(),dateMPolicy, get_TrxName());
 			storage.addQtyOnHand(getMovementQty());
 			if (log.isLoggable(Level.FINE))log.log(Level.FINE, "Created finished goods line " + getLine());
@@ -200,7 +208,8 @@ public class MProductionLine extends X_M_ProductionLine {
 			}
 			else
 			{
-				MStorageOnHand storage = MStorageOnHand.getCreate(Env.getCtx(), getM_Locator_ID(), getM_Product_ID(),
+				//TODO:hieplq if use BOM, need define to detect which material is tracking by order
+				MStorageOnHand storage = MStorageOnHand.getCreate(0, 0, Env.getCtx(), getM_Locator_ID(), getM_Product_ID(), 
 						asi.get_ID(), date, get_TrxName(), true);
 				
 				BigDecimal lineQty = qtyToMove;

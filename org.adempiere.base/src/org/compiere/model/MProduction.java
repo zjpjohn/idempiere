@@ -22,7 +22,10 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
-public class MProduction extends X_M_Production implements DocAction {
+import vn.hsv.idempiere.base.util.IOrderLineLink;
+import vn.hsv.idempiere.base.util.ModelUtil;
+
+public class MProduction extends X_M_Production implements DocAction, IOrderLineLink {
 	/**
 	 * 
 	 */
@@ -888,5 +891,37 @@ public class MProduction extends X_M_Production implements DocAction {
 			}
 		}
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getC_Order()
+	 */
+	@Override
+	public I_C_Order getOrderRef() {
+		return ModelUtil.implementGetOrderRef(this);
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getC_Order_ID()
+	 */
+	@Override
+	public int getOrderRefID() {
+		return ModelUtil.implementGetOrderRefID(this);
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getOrderLine()
+	 */
+	@Override
+	public I_C_OrderLine getOrderLineRef() {
+		return getC_OrderLine();
+	}
+
+	/* (non-Javadoc)
+	 * @see vn.hsv.idempiere.base.util.IOrderLineLink#getOrderLineRefID()
+	 */
+	@Override
+	public int getOrderLineRefID() {
+		return getC_OrderLine_ID();
 	}
 }
