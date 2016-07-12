@@ -250,7 +250,16 @@ public class MMovementLine extends X_M_MovementLine implements ITrackingProduct
 			}
 			*/
 		}       //      ASI
-
+		if (getM_AttributeSetInstanceTo_ID() != getM_AttributeSetInstance_ID()){
+			log.saveError("AttributeSet", "ASI have to same for from and to");
+			return false;
+		}
+		
+		if (getM_AttributeSetInstanceTo_ID() == getM_AttributeSetInstance_ID()
+				&& getM_Locator_ID () == getM_LocatorTo_ID()){
+			log.saveError("AttributeSet", "Non of move");
+		}
+		
 		return true;
 	}	//	beforeSave
 	

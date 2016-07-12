@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -211,8 +212,10 @@ public class MProductionLine extends X_M_ProductionLine implements ITrackingProd
 			}
 			else
 			{
-				//TODO:hieplq if use BOM, need define to detect which material is tracking by order
-				MStorageOnHand storage = MStorageOnHand.getCreate(new NullProviderOrderInfo(), Env.getCtx(), getM_Locator_ID(), getM_Product_ID(), 
+				if (String.valueOf(1).equals("1")){
+					throw new AdempiereException("something wrong, contact with hieplq@hasuvimex.vn");
+				}
+				MStorageOnHand storage = MStorageOnHand.getCreate(NullProviderOrderInfo.NULL, Env.getCtx(), getM_Locator_ID(), getM_Product_ID(), 
 						asi.get_ID(), date, get_TrxName(), true);
 				
 				BigDecimal lineQty = qtyToMove;
@@ -358,22 +361,26 @@ public class MProductionLine extends X_M_ProductionLine implements ITrackingProd
 
 	@Override
 	public I_C_OrderLine getOrderLineRef() {
-		return ((IOrderLineLink)getM_Production()).getOrderLineRef();
+		IOrderLineLink parent = this.getM_Production_ID() == 0?(IOrderLineLink)getM_ProductionPlan():(IOrderLineLink)getM_Production();
+		return parent.getOrderLineRef();
 	}
 
 	@Override
 	public I_C_Order getOrderRef() {
-		return ((IOrderLineLink)getM_Production()).getOrderRef();
+		IOrderLineLink parent = this.getM_Production_ID() == 0?(IOrderLineLink)getM_ProductionPlan():(IOrderLineLink)getM_Production();
+		return parent.getOrderRef();
 	}
 
 	@Override
 	public int getOrderLineRefID() {
-		return ((IOrderLineLink)getM_Production()).getOrderLineRefID();
+		IOrderLineLink parent = this.getM_Production_ID() == 0?(IOrderLineLink)getM_ProductionPlan():(IOrderLineLink)getM_Production();
+		return parent.getOrderLineRefID();
 	}
 
 	@Override
 	public int getOrderRefID() {
-		return ((IOrderLineLink)getM_Production()).getOrderRefID();
+		IOrderLineLink parent = this.getM_Production_ID() == 0?(IOrderLineLink)getM_ProductionPlan():(IOrderLineLink)getM_Production();
+		return parent.getOrderRefID();
 	}
 
 	@Override
