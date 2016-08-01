@@ -55,9 +55,7 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext bundleContext) throws Exception {
 		Activator.context = bundleContext;
 		
-		if (Adempiere.isStarted())
-			createHazelCastInstance();
-		else {
+		if (!Adempiere.isStarted())
 			Adempiere.addServerStateChangeListener(new ServerStateChangeListener() {
 				@Override
 				public void stateChange(ServerStateChangeEvent event) {
@@ -65,12 +63,17 @@ public class Activator implements BundleActivator {
 						createHazelCastInstance();
 				}
 			});
-		}
+		
+		// to avoid timing issue, in case server finish start just before success registry event  
+		if (Adempiere.isStarted())
+			createHazelCastInstance();
 	}
 
 	private static synchronized void createHazelCastInstance() {
 		ScheduledThreadPoolExecutor executor = Adempiere.getThreadPoolExecutor();
-		
+		if (future != null)
+			return;
+			
 		future = executor.submit(new Runnable() {			
 			@Override
 			public void run() {
@@ -147,6 +150,7 @@ public class Activator implements BundleActivator {
 				System.err.println(DateFormat.getDateTimeInstance().format(new Date()) + " Hazelcast instance is down!");
 				//recreate
 				try {
+					//TODO: why don't use configurationn info like createHazelCastInstance
 					hazelcastInstance = Hazelcast.newHazelcastInstance(null);
 					if (!hazelcastInstance.getLifecycleService().isRunning()) {
 						hazelcastInstance = null;
@@ -177,6 +181,7 @@ public class Activator implements BundleActivator {
 			} else if (hazelcastInstance != null) {
 				hazelcastInstance.getLifecycleService().shutdown();
 				hazelcastInstance = null;
+				future = null; // let can recreate hazelcastInstance when restart this bundle 
 			}
 		}
 	}
