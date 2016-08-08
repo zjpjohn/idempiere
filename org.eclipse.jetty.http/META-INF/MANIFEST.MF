@@ -18,18 +18,18 @@ Bundle-Name: Jetty :: Http Utility
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-SymbolicName: org.eclipse.jetty.http
 Bundle-Vendor: Eclipse Jetty Project
-Bundle-Version: 9.3.10.v20160621
-Export-Package: org.eclipse.jetty.http;version="9.3.10";uses:="org.ecl
+Bundle-Version: 9.3.11.v20160721
+Export-Package: org.eclipse.jetty.http;version="9.3.11";uses:="org.ecl
  ipse.jetty.util,org.eclipse.jetty.util.log,org.eclipse.jetty.util.res
- ource",org.eclipse.jetty.http.pathmap;version="9.3.10";uses:="org.ecl
+ ource",org.eclipse.jetty.http.pathmap;version="9.3.11";uses:="org.ecl
  ipse.jetty.util.annotation,org.eclipse.jetty.util.component",org.ecli
- pse.jetty.http2.hpack;version="9.3.10";uses:="org.eclipse.jetty.http,
+ pse.jetty.http2.hpack;version="9.3.11";uses:="org.eclipse.jetty.http,
  org.eclipse.jetty.util.log"
-Import-Package: org.eclipse.jetty.util;version="[9.3.10,9.3.11)",org.e
- clipse.jetty.util.annotation;version="[9.3.10,9.3.11)",org.eclipse.je
- tty.util.component;version="[9.3.10,9.3.11)",org.eclipse.jetty.util.l
- og;version="[9.3.10,9.3.11)",org.eclipse.jetty.util.resource;version=
- "[9.3.10,9.3.11)"
+Import-Package: org.eclipse.jetty.util;version="[9.3.10,9.3.12)",org.e
+ clipse.jetty.util.annotation;version="[9.3.10,9.3.12)",org.eclipse.je
+ tty.util.component;version="[9.3.10,9.3.12)",org.eclipse.jetty.util.l
+ og;version="[9.3.10,9.3.12)",org.eclipse.jetty.util.resource;version=
+ "[9.3.10,9.3.12)"
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 Tool: Bnd-2.4.1.201501161923
 
