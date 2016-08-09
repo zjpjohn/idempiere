@@ -28,7 +28,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/fop-transcoder-allinone-1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/hibernate-core-3.3.2.GA.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/itext-2.1.7.js5.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jasperreports-6.3.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jasperreports-6.3.0.jar" sourcepath="/mnt/data/programe/jasperreports-6.3.0/src"/>
 	<classpathentry exported="true" kind="lib" path="lib/jasperreports-fonts-6.3.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jasperreports-functions-6.3.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jaxen-1.1.1.jar"/>
